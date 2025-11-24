@@ -1,0 +1,26 @@
+Abre el archivo sistemaHorario/crear_hash.php.
+
+Cambia la contraseña 'admin' por la contraseña que tú quieras usar. Por ejemplo:
+
+Abre este archivo en tu navegador (ej. http://localhost/sistemaHorario/crear_hash.php).
+
+Verás una cadena larga de texto. Copia este "hash", lo necesitarás en el siguiente paso.
+
+
+
+Paso 2: Insertar el Usuario en la Base de Datos
+
+INSERT INTO `usuarios` (`nombre_completo`, `cedula`, `password`, `id_rol`) VALUES
+('Tu Nombre Completo', 'TuCedula', 'PEGA_AQUÍ_EL_HASH_QUE_GENERASTE', 1);
+
+
+
+Importante:
+
+Reemplaza TuNombre, TuApellido y TuCedula con tus datos reales.
+
+Reemplaza PEGA_AQUÍ_EL_HASH_QUE_GENERASTE por el código que copiaste en el paso anterior.
+
+El id_rol es 1, que corresponde al rol de 'Admin' según tu archivo sistema_horarios_db.sql.
+
+Ejecuta la consulta.
