@@ -21,20 +21,33 @@ try {
             break;
 
         case 'registrar':
-            // Recuperar los tillos enviados (array)
-            $tillos = $_POST['tillos_generados'] ?? []; // Esperamos un array
-            
-            // 1. Validar que no estén vacíos y que no estén ocupados
-            if (empty($tillos)) {
-                $response['message'] = 'No se han generado Tillos para este pedido.';
-                break;
+            // --- NUEVA LÓGICA DE RECEPCIÓN DE TILLOS ---
+            $mapaTillos = $_POST['tillos_asignados'] ?? []; 
+            $tillosParaGuardar = []; // Estructura: ['codigo' => '...', 'id_producto' => 1]
+
+            // Aplanamos el array para validación y guardado
+            foreach ($mapaTillos as $idProd => $codigos) {
+                foreach ($codigos as $codigo) {
+                    if (!empty($codigo)) {
+                        $tillosParaGuardar[] = [
+                            'codigo' => $codigo, 
+                            'id_producto' => $idProd
+                        ];
+                    }
+                }
             }
 
-            foreach ($tillos as $tillo) {
-                if ($pedidoDAO->verificarTilloOcupado($tillo)) {
-                    $response['message'] = "El Tillo $tillo ya está ocupado. Por favor revíselo.";
+            // 1. Validar ocupados
+            if (empty($tillosParaGuardar)) {
+                // Nota: Podrías permitir pedidos sin tillos si son solo guarniciones
+                // pero si quieres obligar, deja este check.
+            }
+
+            foreach ($tillosParaGuardar as $item) {
+                if ($pedidoDAO->verificarTilloOcupado($item['codigo'])) {
+                    $response['message'] = "El Tillo {$item['codigo']} ya está ocupado.";
                     echo json_encode($response);
-                    exit; // Cortamos aquí si hay uno malo
+                    exit;
                 }
             }
 
@@ -75,8 +88,9 @@ try {
                 break;
             }
 
-            // 5. Guardar (Pasamos el array de tillos)
-            if ($pedidoDAO->registrar($pedido, $detalles, $tillos)) {
+            // 5. Guardar (Enviamos el nuevo array estructurado)
+            // NOTA: Asegúrate de pasar $tillosParaGuardar en lugar de $tillos
+            if ($pedidoDAO->registrar($pedido, $detalles, $tillosParaGuardar)) {
                 $response['success'] = true;
                 $response['message'] = 'Pedido registrado correctamente.';
             } else {

@@ -32,17 +32,18 @@ include '../partials/header.php';
     
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
-            <thead>
-                <tr class="bg-gray-800 text-white text-sm uppercase tracking-wider">
-                    <th class="py-3 px-6">Tillo</th> 
+            <thead class="hidden md:table-header-group bg-gray-800 text-white text-sm uppercase tracking-wider">
+                <tr>
+                    <th class="py-3 px-6 rounded-tl-lg">Tillo</th> 
                     <th class="py-3 px-6">Cliente</th>
                     <th class="py-3 px-6">Entrega</th>
                     <th class="py-3 px-6">Total</th>
                     <th class="py-3 px-6 text-center">Estado</th>
-                    <th class="py-3 px-6 text-center">Acciones</th>
+                    <th class="py-3 px-6 text-center rounded-tr-lg">Acciones</th>
                 </tr>
             </thead>
-            <tbody id="tablaPedidosBody" class="text-gray-700 text-sm">
+            
+            <tbody id="tablaPedidosBody" class="text-gray-700 text-sm block md:table-row-group space-y-4 md:space-y-0 p-4 md:p-0">
                 <tr><td colspan="6" class="text-center py-4">Cargando pedidos...</td></tr>
             </tbody>
         </table>

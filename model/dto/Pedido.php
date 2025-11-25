@@ -9,17 +9,21 @@ class Pedido {
     public $fecha_entrega;
     public $hora_entrega;
     public $total;
-    public $estado; // Pendiente, Entregado, Cancelado
+    public $estado; 
     public $observaciones;
     public $evidencia_foto;
     
     // Propiedades auxiliares (JOINs)
     public $nombre_cliente;
     public $nombre_usuario;
-
-    // --- AGREGAMOS ESTAS PROPIEDADES FALTANTES ---
     public $cedula;
     public $telefono;
-    public $detalles = []; // Inicializamos como array vacío por seguridad
+    
+    public $detalles = []; 
+
+    public $tillos_secundarios; // Este lo usamos para la TABLA (lista)
+    
+    // --- AGREGAR ESTA LÍNEA PARA CORREGIR EL ERROR EN VER_PEDIDO ---
+    public $tillos = []; // Este lo usamos para el DETALLE (ver_pedido.php)
 }
 ?>

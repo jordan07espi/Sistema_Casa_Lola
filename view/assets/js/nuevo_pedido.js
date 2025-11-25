@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     divInput.innerHTML = `
                         <span class="text-xs text-gray-500 w-6 font-mono">#${i}</span>
                         <div class="relative flex-1">
-                            <input type="text" name="tillos_generados[]" 
+                            <input type="text" name="tillos_asignados[${idProd}][]" 
                                 class="input-tillo-dinamico w-full border-gray-300 rounded focus:ring-orange-500 focus:border-orange-500 px-2 py-1 text-sm font-mono font-bold uppercase transition-colors"
                                 value="${valorInicial}"
                                 data-prefix="${PREFIJO_GLOBAL}"

@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.2
+-- version 5.2.3
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: db
--- Tiempo de generación: 24-11-2025 a las 22:00:26
--- Versión del servidor: 8.4.6
--- Versión de PHP: 8.2.29
+-- Tiempo de generación: 25-11-2025 a las 02:53:58
+-- Versión del servidor: 8.4.7
+-- Versión de PHP: 8.3.27
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -29,9 +29,9 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `clientes` (
   `id_cliente` int NOT NULL,
-  `cedula` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `nombre` varchar(200) COLLATE utf8mb4_general_ci NOT NULL,
-  `telefono` varchar(20) COLLATE utf8mb4_general_ci NOT NULL,
+  `cedula` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `nombre` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `telefono` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `activo` tinyint(1) NOT NULL DEFAULT '1',
   `fecha_registro` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -64,16 +64,11 @@ CREATE TABLE `detalles_pedido` (
 --
 
 INSERT INTO `detalles_pedido` (`id_detalle`, `id_pedido`, `id_producto`, `cantidad`) VALUES
-(1, 1, 1, 1),
-(9, 3, 4, 1),
-(10, 3, 5, 2),
-(11, 4, 1, 1),
-(12, 4, 2, 2),
-(13, 4, 3, 1),
-(14, 4, 6, 3),
-(15, 5, 1, 1),
-(16, 5, 5, 2),
-(17, 5, 3, 1);
+(18, 6, 1, 1),
+(19, 6, 4, 2),
+(20, 6, 3, 50),
+(21, 6, 6, 5),
+(22, 6, 9, 3);
 
 -- --------------------------------------------------------
 
@@ -83,8 +78,8 @@ INSERT INTO `detalles_pedido` (`id_detalle`, `id_pedido`, `id_producto`, `cantid
 
 CREATE TABLE `intentos_login_fallidos` (
   `id` int NOT NULL,
-  `cedula` varchar(20) COLLATE utf8mb4_general_ci NOT NULL,
-  `ip_address` varchar(45) COLLATE utf8mb4_general_ci NOT NULL,
+  `cedula` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `ip_address` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `fecha_intento` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -96,16 +91,16 @@ CREATE TABLE `intentos_login_fallidos` (
 
 CREATE TABLE `pedidos` (
   `id_pedido` int NOT NULL,
-  `codigo_pedido` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
+  `codigo_pedido` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `id_cliente` int NOT NULL,
   `id_usuario` int NOT NULL,
   `fecha_creacion` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `fecha_entrega` date NOT NULL,
   `hora_entrega` time NOT NULL,
   `total` decimal(10,2) NOT NULL,
-  `estado` enum('Pendiente','Entregado','Cancelado') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'Pendiente',
-  `observaciones` text COLLATE utf8mb4_general_ci,
-  `evidencia_foto` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL
+  `estado` enum('Pendiente','Entregado','Cancelado') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'Pendiente',
+  `observaciones` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `evidencia_foto` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -113,10 +108,7 @@ CREATE TABLE `pedidos` (
 --
 
 INSERT INTO `pedidos` (`id_pedido`, `codigo_pedido`, `id_cliente`, `id_usuario`, `fecha_creacion`, `fecha_entrega`, `hora_entrega`, `total`, `estado`, `observaciones`, `evidencia_foto`) VALUES
-(1, '2025_45', 3, 1, '2025-11-24 20:36:59', '2025-11-29', '07:00:00', 160.00, 'Entregado', 'Maduro', NULL),
-(3, '2025_FF', 4, 1, '2025-11-24 21:36:27', '2025-11-30', '07:00:00', 60.00, 'Cancelado', 'Vienen con bandeja', NULL),
-(4, '2025_24', 4, 1, '2025-11-24 21:52:02', '2025-11-24', '21:50:00', 200.00, 'Pendiente', 'Viene maduro', NULL),
-(5, '2025_34', 3, 1, '2025-11-24 21:57:11', '2025-11-24', '21:55:00', 45.00, 'Pendiente', '', NULL);
+(6, '2025_43', 3, 1, '2025-11-25 02:45:01', '2025-11-30', '07:00:00', 200.00, 'Pendiente', 'La pierna viene madura', NULL);
 
 -- --------------------------------------------------------
 
@@ -127,21 +119,19 @@ INSERT INTO `pedidos` (`id_pedido`, `codigo_pedido`, `id_cliente`, `id_usuario`,
 CREATE TABLE `pedidos_tillos` (
   `id_tillo` int NOT NULL,
   `id_pedido` int NOT NULL,
-  `codigo_tillo` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
-  `estado` enum('Pendiente','Entregado') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'Pendiente'
+  `codigo_tillo` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `estado` enum('Pendiente','Entregado') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'Pendiente',
+  `id_producto` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `pedidos_tillos`
 --
 
-INSERT INTO `pedidos_tillos` (`id_tillo`, `id_pedido`, `codigo_tillo`, `estado`) VALUES
-(1, 4, '2025_24', 'Pendiente'),
-(2, 4, '2025_FF', 'Pendiente'),
-(3, 4, '2025_25', 'Pendiente'),
-(4, 5, '2025_34', 'Pendiente'),
-(5, 5, '2025_45', 'Pendiente'),
-(6, 5, '2025_67', 'Pendiente');
+INSERT INTO `pedidos_tillos` (`id_tillo`, `id_pedido`, `codigo_tillo`, `estado`, `id_producto`) VALUES
+(7, 6, '2025_43', 'Pendiente', 1),
+(8, 6, '2025_67', 'Pendiente', 4),
+(9, 6, '2025_129', 'Pendiente', 4);
 
 -- --------------------------------------------------------
 
@@ -151,7 +141,7 @@ INSERT INTO `pedidos_tillos` (`id_tillo`, `id_pedido`, `codigo_tillo`, `estado`)
 
 CREATE TABLE `productos` (
   `id_producto` int NOT NULL,
-  `nombre_producto` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `nombre_producto` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `activo` tinyint(1) NOT NULL DEFAULT '1',
   `requiere_tillo` tinyint(1) NOT NULL DEFAULT '1'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -179,7 +169,7 @@ INSERT INTO `productos` (`id_producto`, `nombre_producto`, `activo`, `requiere_t
 
 CREATE TABLE `roles` (
   `id_rol` int NOT NULL,
-  `nombre_rol` varchar(50) COLLATE utf8mb4_general_ci NOT NULL
+  `nombre_rol` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -198,9 +188,9 @@ INSERT INTO `roles` (`id_rol`, `nombre_rol`) VALUES
 
 CREATE TABLE `usuarios` (
   `id_usuario` int NOT NULL,
-  `nombre_completo` varchar(200) COLLATE utf8mb4_general_ci NOT NULL,
-  `cedula` varchar(20) COLLATE utf8mb4_general_ci NOT NULL,
-  `password` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `nombre_completo` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `cedula` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `id_rol` int NOT NULL,
   `activo` tinyint(1) NOT NULL DEFAULT '1'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -249,7 +239,8 @@ ALTER TABLE `pedidos`
 --
 ALTER TABLE `pedidos_tillos`
   ADD PRIMARY KEY (`id_tillo`),
-  ADD KEY `fk_tillos_pedido` (`id_pedido`);
+  ADD KEY `fk_tillos_pedido` (`id_pedido`),
+  ADD KEY `fk_tillos_producto` (`id_producto`);
 
 --
 -- Indices de la tabla `productos`
@@ -285,25 +276,25 @@ ALTER TABLE `clientes`
 -- AUTO_INCREMENT de la tabla `detalles_pedido`
 --
 ALTER TABLE `detalles_pedido`
-  MODIFY `id_detalle` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id_detalle` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT de la tabla `intentos_login_fallidos`
 --
 ALTER TABLE `intentos_login_fallidos`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `pedidos`
 --
 ALTER TABLE `pedidos`
-  MODIFY `id_pedido` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id_pedido` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de la tabla `pedidos_tillos`
 --
 ALTER TABLE `pedidos_tillos`
-  MODIFY `id_tillo` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id_tillo` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT de la tabla `productos`
@@ -345,7 +336,8 @@ ALTER TABLE `pedidos`
 -- Filtros para la tabla `pedidos_tillos`
 --
 ALTER TABLE `pedidos_tillos`
-  ADD CONSTRAINT `fk_tillos_pedido` FOREIGN KEY (`id_pedido`) REFERENCES `pedidos` (`id_pedido`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_tillos_pedido` FOREIGN KEY (`id_pedido`) REFERENCES `pedidos` (`id_pedido`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_tillos_producto` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`);
 
 --
 -- Filtros para la tabla `usuarios`
