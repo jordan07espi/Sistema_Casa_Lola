@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: db
--- Tiempo de generación: 25-11-2025 a las 02:53:58
+-- Tiempo de generación: 25-11-2025 a las 05:37:33
 -- Versión del servidor: 8.4.7
 -- Versión de PHP: 8.3.27
 
@@ -44,7 +44,8 @@ INSERT INTO `clientes` (`id_cliente`, `cedula`, `nombre`, `telefono`, `activo`, 
 (1, '2350637217', 'JORDAN ESPINOSA', '0986780565', 0, '2025-11-24 18:30:41'),
 (2, '1714309844', 'LUIS ESPINOSA', '0986780565', 1, '2025-11-24 18:30:58'),
 (3, '2350637217', 'JORDAN ESPINOSA', '0986780565', 1, '2025-11-24 18:39:33'),
-(4, '2300533193', 'HECTOR CEDEÑO', '0985134893', 1, '2025-11-24 21:30:01');
+(4, '2300533193', 'HECTOR CEDEÑO', '0985134893', 1, '2025-11-24 21:30:01'),
+(5, '1712396199', 'ENMA TIPAN', '0982826252', 1, '2025-11-25 03:47:56');
 
 -- --------------------------------------------------------
 
@@ -68,7 +69,12 @@ INSERT INTO `detalles_pedido` (`id_detalle`, `id_pedido`, `id_producto`, `cantid
 (19, 6, 4, 2),
 (20, 6, 3, 50),
 (21, 6, 6, 5),
-(22, 6, 9, 3);
+(22, 6, 9, 3),
+(23, 7, 1, 1),
+(24, 7, 5, 1),
+(25, 8, 1, 1),
+(26, 8, 2, 2),
+(27, 9, 1, 1);
 
 -- --------------------------------------------------------
 
@@ -108,7 +114,10 @@ CREATE TABLE `pedidos` (
 --
 
 INSERT INTO `pedidos` (`id_pedido`, `codigo_pedido`, `id_cliente`, `id_usuario`, `fecha_creacion`, `fecha_entrega`, `hora_entrega`, `total`, `estado`, `observaciones`, `evidencia_foto`) VALUES
-(6, '2025_43', 3, 1, '2025-11-25 02:45:01', '2025-11-30', '07:00:00', 200.00, 'Pendiente', 'La pierna viene madura', NULL);
+(6, '2025_43', 3, 1, '2025-11-25 02:45:01', '2025-11-30', '07:00:00', 200.00, 'Entregado', 'La pierna viene madura', NULL),
+(7, '2025_LL', 2, 1, '2025-11-25 03:28:31', '2025-12-24', '11:00:00', 160.00, 'Pendiente', 'Trae bandeja', NULL),
+(8, '2025_67', 5, 1, '2025-11-25 03:51:23', '2025-11-30', '08:00:00', 120.00, 'Entregado', 'La perna viene madura y trae una bandeja', NULL),
+(9, '2025_28', 4, 2, '2025-11-25 03:53:42', '2025-11-25', '03:53:00', 129.00, 'Cancelado', '', NULL);
 
 -- --------------------------------------------------------
 
@@ -129,9 +138,15 @@ CREATE TABLE `pedidos_tillos` (
 --
 
 INSERT INTO `pedidos_tillos` (`id_tillo`, `id_pedido`, `codigo_tillo`, `estado`, `id_producto`) VALUES
-(7, 6, '2025_43', 'Pendiente', 1),
-(8, 6, '2025_67', 'Pendiente', 4),
-(9, 6, '2025_129', 'Pendiente', 4);
+(7, 6, '2025_43', 'Entregado', 1),
+(8, 6, '2025_67', 'Entregado', 4),
+(9, 6, '2025_129', 'Entregado', 4),
+(10, 7, '2025_LL', 'Pendiente', 1),
+(11, 7, '2025_87', 'Pendiente', 5),
+(12, 8, '2025_67', 'Entregado', 1),
+(13, 8, '2025_KK', 'Entregado', 2),
+(14, 8, '2025_123', 'Entregado', 2),
+(15, 9, '2025_28', 'Pendiente', 1);
 
 -- --------------------------------------------------------
 
@@ -200,7 +215,8 @@ CREATE TABLE `usuarios` (
 --
 
 INSERT INTO `usuarios` (`id_usuario`, `nombre_completo`, `cedula`, `password`, `id_rol`, `activo`) VALUES
-(1, 'Jordan Espinosa', '2350637217', '$2y$10$VWjzn/QJiNd/XhUC/E5TSOA2P./VddqiuVlxtD7zOEXbxiZ/iHRL6', 1, 1);
+(1, 'Jordan Espinosa', '2350637217', '$2y$10$VWjzn/QJiNd/XhUC/E5TSOA2P./VddqiuVlxtD7zOEXbxiZ/iHRL6', 1, 1),
+(2, 'ENMA TIPAN', '1712396199', '$2y$10$GeVdlvrtvAL8iMYhZ3Uuh./1MYhqKUbnNBtSwolWf0Ulcc89H39hi', 1, 1);
 
 --
 -- Índices para tablas volcadas
@@ -270,13 +286,13 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de la tabla `clientes`
 --
 ALTER TABLE `clientes`
-  MODIFY `id_cliente` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_cliente` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de la tabla `detalles_pedido`
 --
 ALTER TABLE `detalles_pedido`
-  MODIFY `id_detalle` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id_detalle` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT de la tabla `intentos_login_fallidos`
@@ -288,13 +304,13 @@ ALTER TABLE `intentos_login_fallidos`
 -- AUTO_INCREMENT de la tabla `pedidos`
 --
 ALTER TABLE `pedidos`
-  MODIFY `id_pedido` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id_pedido` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT de la tabla `pedidos_tillos`
 --
 ALTER TABLE `pedidos_tillos`
-  MODIFY `id_tillo` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id_tillo` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT de la tabla `productos`
@@ -312,7 +328,7 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id_usuario` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_usuario` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- Restricciones para tablas volcadas
