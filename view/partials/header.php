@@ -75,6 +75,12 @@ $rolUsuario = $_SESSION['rol'] ?? 'Invitado';
                 <?php endif; ?>
 
                 <?php if ($rolUsuario === 'Administrador') : ?>
+                    <a href="reportes.php" class="hover:text-orange-400 transition-colors flex items-center gap-2">
+                        <i class="fas fa-chart-pie"></i> Reportes
+                    </a>
+                <?php endif; ?>
+
+                <?php if ($rolUsuario === 'Administrador') : ?>
                     <a href="usuarios.php" class="hover:text-orange-400 transition-colors flex items-center gap-2">
                         <i class="fas fa-user-shield"></i> Usuarios
                     </a>
