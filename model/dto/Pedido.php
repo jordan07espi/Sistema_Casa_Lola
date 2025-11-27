@@ -1,5 +1,9 @@
 <?php
 // Archivo: model/dto/Pedido.php
+
+// AGREGA ESTA LÍNEA para permitir propiedades dinámicas si usas PHP 8.2+
+// O simplemente declara las variables faltantes abajo.
+#[AllowDynamicProperties] 
 class Pedido {
     public $id_pedido;
     public $codigo_pedido;
@@ -13,6 +17,10 @@ class Pedido {
     public $observaciones;
     public $evidencia_foto;
     
+    // --- NUEVAS PROPIEDADES QUE FALTABAN (Están en tu BD) ---
+    public $veces_impreso;
+    public $fecha_ultima_impresion;
+
     // Propiedades auxiliares (JOINs)
     public $nombre_cliente;
     public $nombre_usuario;
@@ -21,9 +29,8 @@ class Pedido {
     
     public $detalles = []; 
 
-    public $tillos_secundarios; // Este lo usamos para la TABLA (lista)
+    public $tillos_secundarios; 
     
-    // --- AGREGAR ESTA LÍNEA PARA CORREGIR EL ERROR EN VER_PEDIDO ---
-    public $tillos = []; // Este lo usamos para el DETALLE (ver_pedido.php)
+    public $tillos = []; 
 }
 ?>

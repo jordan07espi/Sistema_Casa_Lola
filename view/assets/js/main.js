@@ -26,5 +26,5 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Carga inicial
-    cargarDatosGlobales();
+    // cargarDatosGlobales();  <--- ELIMINA O COMENTA ESTA LÍNEA (No existe la función)
 });
