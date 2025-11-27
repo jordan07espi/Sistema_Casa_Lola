@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.3
+-- version 5.2.2
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: db
--- Tiempo de generación: 25-11-2025 a las 05:37:33
--- Versión del servidor: 8.4.7
--- Versión de PHP: 8.3.27
+-- Tiempo de generación: 27-11-2025 a las 22:44:31
+-- Versión del servidor: 8.4.6
+-- Versión de PHP: 8.2.29
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -74,7 +74,9 @@ INSERT INTO `detalles_pedido` (`id_detalle`, `id_pedido`, `id_producto`, `cantid
 (24, 7, 5, 1),
 (25, 8, 1, 1),
 (26, 8, 2, 2),
-(27, 9, 1, 1);
+(27, 9, 1, 1),
+(28, 10, 1, 1),
+(29, 11, 5, 1);
 
 -- --------------------------------------------------------
 
@@ -106,18 +108,22 @@ CREATE TABLE `pedidos` (
   `total` decimal(10,2) NOT NULL,
   `estado` enum('Pendiente','Entregado','Cancelado') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'Pendiente',
   `observaciones` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  `evidencia_foto` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL
+  `evidencia_foto` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `veces_impreso` int DEFAULT '0',
+  `fecha_ultima_impresion` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `pedidos`
 --
 
-INSERT INTO `pedidos` (`id_pedido`, `codigo_pedido`, `id_cliente`, `id_usuario`, `fecha_creacion`, `fecha_entrega`, `hora_entrega`, `total`, `estado`, `observaciones`, `evidencia_foto`) VALUES
-(6, '2025_43', 3, 1, '2025-11-25 02:45:01', '2025-11-30', '07:00:00', 200.00, 'Entregado', 'La pierna viene madura', NULL),
-(7, '2025_LL', 2, 1, '2025-11-25 03:28:31', '2025-12-24', '11:00:00', 160.00, 'Pendiente', 'Trae bandeja', NULL),
-(8, '2025_67', 5, 1, '2025-11-25 03:51:23', '2025-11-30', '08:00:00', 120.00, 'Entregado', 'La perna viene madura y trae una bandeja', NULL),
-(9, '2025_28', 4, 2, '2025-11-25 03:53:42', '2025-11-25', '03:53:00', 129.00, 'Cancelado', '', NULL);
+INSERT INTO `pedidos` (`id_pedido`, `codigo_pedido`, `id_cliente`, `id_usuario`, `fecha_creacion`, `fecha_entrega`, `hora_entrega`, `total`, `estado`, `observaciones`, `evidencia_foto`, `veces_impreso`, `fecha_ultima_impresion`) VALUES
+(6, '2025_43', 3, 1, '2025-11-25 02:45:01', '2025-11-30', '07:00:00', 200.00, 'Entregado', 'La pierna viene madura', NULL, 0, NULL),
+(7, '2025_LL', 2, 1, '2025-11-25 03:28:31', '2025-12-24', '11:00:00', 160.00, 'Pendiente', 'Trae bandeja', NULL, 0, NULL),
+(8, '2025_67', 5, 1, '2025-11-25 03:51:23', '2025-11-30', '08:00:00', 120.00, 'Entregado', 'La perna viene madura y trae una bandeja', NULL, 0, NULL),
+(9, '2025_28', 4, 2, '2025-11-25 03:53:42', '2025-11-25', '03:53:00', 129.00, 'Cancelado', '', NULL, 0, NULL),
+(10, '2025_67', 5, 1, '2025-11-25 17:59:04', '2025-11-25', '13:00:00', 22.00, 'Pendiente', '', NULL, 0, NULL),
+(11, '2025_GG', 5, 1, '2025-11-27 21:38:05', '2025-11-30', '21:37:00', 45.00, 'Pendiente', '', NULL, 0, NULL);
 
 -- --------------------------------------------------------
 
@@ -146,7 +152,9 @@ INSERT INTO `pedidos_tillos` (`id_tillo`, `id_pedido`, `codigo_tillo`, `estado`,
 (12, 8, '2025_67', 'Entregado', 1),
 (13, 8, '2025_KK', 'Entregado', 2),
 (14, 8, '2025_123', 'Entregado', 2),
-(15, 9, '2025_28', 'Pendiente', 1);
+(15, 9, '2025_28', 'Pendiente', 1),
+(16, 10, '2025_67', 'Pendiente', 1),
+(17, 11, '2025_GG', 'Pendiente', 5);
 
 -- --------------------------------------------------------
 
@@ -292,7 +300,7 @@ ALTER TABLE `clientes`
 -- AUTO_INCREMENT de la tabla `detalles_pedido`
 --
 ALTER TABLE `detalles_pedido`
-  MODIFY `id_detalle` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `id_detalle` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT de la tabla `intentos_login_fallidos`
@@ -304,13 +312,13 @@ ALTER TABLE `intentos_login_fallidos`
 -- AUTO_INCREMENT de la tabla `pedidos`
 --
 ALTER TABLE `pedidos`
-  MODIFY `id_pedido` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id_pedido` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT de la tabla `pedidos_tillos`
 --
 ALTER TABLE `pedidos_tillos`
-  MODIFY `id_tillo` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id_tillo` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT de la tabla `productos`
