@@ -24,12 +24,12 @@ if ($rolUsuario !== 'Administrador') {
 
     <div class="overflow-x-auto">
         <table class="w-full border-collapse">
-            <thead>
-                <tr class="bg-gray-200 text-left">
-                    <th class="py-2 px-4">Nombre Completo</th>
-                    <th class="py-2 px-4">Cédula</th>
-                    <th class="py-2 px-4">Rol</th>
-                    <th class="py-2 px-4">Acciones</th>
+            <thead class="hidden md:table-header-group bg-gray-800 text-white text-sm uppercase tracking-wider">
+                <tr>
+                    <th class="py-3 px-6 font-semibold rounded-tl-lg">Nombre Completo</th>
+                    <th class="py-3 px-6 font-semibold">Cédula</th>
+                    <th class="py-3 px-6 font-semibold">Rol</th>
+                    <th class="py-3 px-6 font-semibold text-center rounded-tr-lg">Acciones</th>
                 </tr>
             </thead>
             <tbody id="tablaUsuariosBody">

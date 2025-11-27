@@ -113,19 +113,34 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         lista.forEach(c => {
-            // Usamos sanitizeHTML (definida en main.js) para seguridad
+            // Diseño Responsivo: Card en Móvil / Tabla en Desktop
             tbody.innerHTML += `
-                <tr class="border-b hover:bg-orange-50 transition">
-                    <td class="py-3 px-6 font-medium text-gray-900">${sanitizeHTML(c.cedula)}</td>
-                    <td class="py-3 px-6">${sanitizeHTML(c.nombre)}</td>
-                    <td class="py-3 px-6 text-gray-600">${sanitizeHTML(c.telefono)}</td>
-                    <td class="py-3 px-6 text-center space-x-2">
-                        <button onclick='editarCliente(${JSON.stringify(c)})' class="text-amber-500 hover:text-amber-700 p-1" title="Editar">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button onclick="eliminarCliente(${c.id_cliente})" class="text-red-500 hover:text-red-700 p-1" title="Eliminar">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
+                <tr class="bg-white border md:border-b border-gray-200 block md:table-row rounded-xl shadow-sm md:shadow-none mb-4 md:mb-0 hover:bg-orange-50 transition">
+                    
+                    <td class="p-4 md:py-3 md:px-6 block md:table-cell border-b md:border-none bg-gray-50 md:bg-transparent">
+                        <span class="md:hidden text-xs font-bold text-gray-400 uppercase mb-1 block">Cédula</span>
+                        <span class="font-mono font-bold text-gray-900">${sanitizeHTML(c.cedula)}</span>
+                    </td>
+
+                    <td class="p-4 md:py-3 md:px-6 block md:table-cell border-b md:border-none">
+                        <span class="md:hidden text-xs font-bold text-gray-400 uppercase mb-1 block">Cliente</span>
+                        <span class="font-medium text-gray-800 uppercase">${sanitizeHTML(c.nombre)}</span>
+                    </td>
+
+                    <td class="p-4 md:py-3 md:px-6 block md:table-cell border-b md:border-none">
+                        <span class="md:hidden text-xs font-bold text-gray-400 uppercase mb-1 block">Teléfono</span>
+                        <span class="text-gray-600"><i class="fas fa-phone-alt text-orange-400 mr-2"></i>${sanitizeHTML(c.telefono)}</span>
+                    </td>
+
+                    <td class="p-4 md:py-3 md:px-6 block md:table-cell text-center">
+                        <div class="flex md:justify-center justify-end gap-3">
+                            <button onclick='editarCliente(${JSON.stringify(c)})' class="bg-amber-100 text-amber-600 hover:bg-amber-200 px-3 py-2 rounded-lg transition shadow-sm flex items-center gap-2" title="Editar">
+                                <i class="fas fa-edit"></i> <span class="md:hidden text-sm font-bold">Editar</span>
+                            </button>
+                            <button onclick="eliminarCliente(${c.id_cliente})" class="bg-red-100 text-red-600 hover:bg-red-200 px-3 py-2 rounded-lg transition shadow-sm flex items-center gap-2" title="Eliminar">
+                                <i class="fas fa-trash-alt"></i> <span class="md:hidden text-sm font-bold">Eliminar</span>
+                            </button>
+                        </div>
                     </td>
                 </tr>
             `;

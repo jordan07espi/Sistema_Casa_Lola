@@ -37,6 +37,7 @@ function generarReporte() {
 }
 
 // 1. Renderizar lo que se ve en el navegador (Tabla simple)
+
 function renderizarPantalla(data) {
     const tbody = document.getElementById('tbodyReporte');
     const rangoTxt = document.getElementById('rangoPantalla');
@@ -55,17 +56,40 @@ function renderizarPantalla(data) {
 
     data.lista.forEach(item => {
         let badge = '';
-        if(item.estado === 'Entregado') badge = 'bg-green-100 text-green-800';
-        else if(item.estado === 'Pendiente') badge = 'bg-yellow-100 text-yellow-800';
-        else badge = 'bg-red-100 text-red-800';
+        if(item.estado === 'Entregado') badge = 'bg-green-100 text-green-800 border-green-200';
+        else if(item.estado === 'Pendiente') badge = 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        else badge = 'bg-red-100 text-red-800 border-red-200';
 
+        // Renderizado Responsivo (Card View)
         tbody.innerHTML += `
-            <tr class="border-b hover:bg-gray-50 transition">
-                <td class="py-2 px-4 text-gray-600">${item.fecha_entrega}</td>
-                <td class="py-2 px-4 font-mono font-bold text-gray-800">#${sanitizeHTML(item.codigo_pedido)}</td>
-                <td class="py-2 px-4 uppercase font-medium">${sanitizeHTML(item.cliente)}</td>
-                <td class="py-2 px-4 text-center"><span class="px-2 py-0.5 rounded text-xs font-bold ${badge}">${item.estado}</span></td>
-                <td class="py-2 px-4 text-right font-bold text-gray-900">$${parseFloat(item.total).toFixed(2)}</td>
+            <tr class="bg-white border md:border-b border-gray-200 block md:table-row rounded-xl shadow-sm md:shadow-none mb-4 md:mb-0 hover:bg-gray-50 transition">
+                
+                <td class="p-4 md:py-3 md:px-4 block md:table-cell border-b md:border-none">
+                    <span class="md:hidden text-xs font-bold text-gray-400 uppercase mb-1 block">Fecha Entrega</span>
+                    <span class="text-gray-600 font-medium"><i class="far fa-calendar mr-1 text-orange-400"></i> ${item.fecha_entrega}</span>
+                </td>
+
+                <td class="p-4 md:py-3 md:px-4 block md:table-cell border-b md:border-none bg-gray-50 md:bg-transparent">
+                    <span class="md:hidden text-xs font-bold text-gray-400 uppercase mb-1 block">Código</span>
+                    <span class="font-mono font-bold text-gray-800 text-lg md:text-sm">#${sanitizeHTML(item.codigo_pedido)}</span>
+                </td>
+
+                <td class="p-4 md:py-3 md:px-4 block md:table-cell border-b md:border-none">
+                    <span class="md:hidden text-xs font-bold text-gray-400 uppercase mb-1 block">Cliente</span>
+                    <span class="uppercase font-medium text-gray-800 text-sm">${sanitizeHTML(item.cliente)}</span>
+                </td>
+
+                <td class="p-4 md:py-3 md:px-4 block md:table-cell md:text-center border-b md:border-none">
+                    <span class="md:hidden text-xs font-bold text-gray-400 uppercase mb-1 block">Estado</span>
+                    <span class="px-2 py-1 rounded text-xs font-bold border ${badge} inline-block">
+                        ${item.estado}
+                    </span>
+                </td>
+
+                <td class="p-4 md:py-3 md:px-4 block md:table-cell md:text-right">
+                    <span class="md:hidden text-xs font-bold text-gray-400 uppercase mb-1 block">Monto Total</span>
+                    <span class="font-black text-gray-900 text-xl md:text-base">$${parseFloat(item.total).toFixed(2)}</span>
+                </td>
             </tr>
         `;
     });

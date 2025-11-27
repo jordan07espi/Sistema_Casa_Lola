@@ -51,13 +51,13 @@ include '../partials/header.php';
     </div>
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse" id="tablaPantalla">
-            <thead>
-                <tr class="bg-white text-gray-600 text-xs uppercase border-b-2 border-gray-100">
-                    <th class="py-3 px-4">Fecha</th>
+            <thead class="hidden md:table-header-group bg-gray-800 text-white text-sm uppercase">
+                <tr>
+                    <th class="py-3 px-4 rounded-tl-lg">Fecha</th>
                     <th class="py-3 px-4">Código</th>
                     <th class="py-3 px-4">Cliente</th>
                     <th class="py-3 px-4 text-center">Estado</th>
-                    <th class="py-3 px-4 text-right">Total</th>
+                    <th class="py-3 px-4 text-right rounded-tr-lg">Total</th>
                 </tr>
             </thead>
             <tbody id="tbodyReporte" class="text-sm text-gray-700">

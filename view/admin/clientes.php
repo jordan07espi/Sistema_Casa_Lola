@@ -22,12 +22,12 @@ include '../partials/header.php';
     
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
-            <thead>
-                <tr class="bg-gray-800 text-white text-sm uppercase tracking-wider">
-                    <th class="py-3 px-6 font-semibold">Cédula</th>
+            <thead class="hidden md:table-header-group bg-gray-800 text-white text-sm uppercase tracking-wider">
+                <tr>
+                    <th class="py-3 px-6 font-semibold rounded-tl-lg">Cédula</th>
                     <th class="py-3 px-6 font-semibold">Nombre Completo</th>
                     <th class="py-3 px-6 font-semibold">Teléfono</th>
-                    <th class="py-3 px-6 font-semibold text-center">Acciones</th>
+                    <th class="py-3 px-6 font-semibold text-center rounded-tr-lg">Acciones</th>
                 </tr>
             </thead>
             <tbody id="tablaClientesBody" class="text-gray-700 text-sm">

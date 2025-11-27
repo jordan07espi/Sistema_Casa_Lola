@@ -60,19 +60,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 tbody.innerHTML = '';
                 if (data.success) {
                     data.data.forEach(u => {
-                        // Sanitizar datos antes de insertarlos
                         const nombreCompleto = sanitizeHTML(u.nombre_completo);
                         const cedula = sanitizeHTML(u.cedula);
                         const nombreRol = sanitizeHTML(u.nombre_rol);
 
+                        // Renderizado Responsivo
                         tbody.innerHTML += `
-                            <tr class="border-b hover:bg-gray-50">
-                                <td class="py-2 px-4">${nombreCompleto}</td>
-                                <td class="py-2 px-4">${cedula}</td>
-                                <td class="py-2 px-4">${nombreRol}</td>
-                                <td class="py-2 px-4">
-                                    <button class="btn-editar bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600" data-id="${u.id_usuario}">Editar</button>
-                                    <button class="btn-eliminar bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600" data-id="${u.id_usuario}">Eliminar</button>
+                            <tr class="bg-white border md:border-b border-gray-200 block md:table-row rounded-xl shadow-sm md:shadow-none mb-4 md:mb-0 hover:bg-gray-50 transition">
+                                
+                                <td class="p-4 md:py-3 md:px-6 block md:table-cell border-b md:border-none">
+                                    <span class="md:hidden text-xs font-bold text-gray-400 uppercase mb-1 block">Nombre</span>
+                                    <div class="font-bold text-gray-800 flex items-center gap-2">
+                                        <div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-xs">
+                                            ${nombreCompleto.charAt(0)}
+                                        </div>
+                                        ${nombreCompleto}
+                                    </div>
+                                </td>
+
+                                <td class="p-4 md:py-3 md:px-6 block md:table-cell border-b md:border-none bg-gray-50 md:bg-transparent">
+                                    <span class="md:hidden text-xs font-bold text-gray-400 uppercase mb-1 block">Cédula</span>
+                                    <span class="font-mono text-gray-600">${cedula}</span>
+                                </td>
+
+                                <td class="p-4 md:py-3 md:px-6 block md:table-cell border-b md:border-none">
+                                    <span class="md:hidden text-xs font-bold text-gray-400 uppercase mb-1 block">Rol</span>
+                                    <span class="px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200 inline-block">
+                                        ${nombreRol}
+                                    </span>
+                                </td>
+
+                                <td class="p-4 md:py-3 md:px-6 block md:table-cell text-center">
+                                    <div class="flex md:justify-center justify-end gap-3">
+                                        <button class="btn-editar bg-yellow-100 text-yellow-700 hover:bg-yellow-200 px-4 py-2 rounded-lg transition font-medium text-sm flex items-center gap-2" data-id="${u.id_usuario}">
+                                            <i class="fas fa-edit pointer-events-none"></i> Editar
+                                        </button>
+                                        <button class="btn-eliminar bg-red-100 text-red-600 hover:bg-red-200 px-4 py-2 rounded-lg transition font-medium text-sm flex items-center gap-2" data-id="${u.id_usuario}">
+                                            <i class="fas fa-trash-alt pointer-events-none"></i> Eliminar
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         `;
