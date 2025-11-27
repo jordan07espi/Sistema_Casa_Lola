@@ -1,26 +1,37 @@
 /**
  * Archivo: view/assets/js/pedidos.js
- * Versión: Multi-Tillos + Día en Español
+ * Versión: Multi-Tillos + Filtro Rango Fechas + Modo Cards
  */
 document.addEventListener('DOMContentLoaded', function() {
     
-    // Referencias
+    // --- 1. REFERENCIAS AL DOM ---
     const tbody = document.getElementById('tablaPedidosBody');
     const buscador = document.getElementById('buscadorPedido');
     const filtroEstado = document.getElementById('filtroEstado');
     const paginacionContainer = document.getElementById('paginacionContainer');
     const txtTotal = document.getElementById('txtTotal');
 
+    // Referencias Nuevas (Rango de Fechas)
+    const inpFechaDesde = document.getElementById('fechaDesde');
+    const inpFechaHasta = document.getElementById('fechaHasta');
+
+    // --- 2. VARIABLES DE ESTADO ---
     let paginaActual = 1;
     let busquedaActual = '';
     let estadoActual = '';
+    let fechaDesde = '';
+    let fechaHasta = '';
     let timeoutBusqueda;
 
+    // Carga inicial
     cargarPedidos();
 
+    // --- 3. FUNCIÓN DE CARGA ---
     function cargarPedidos(pagina = 1) {
         paginaActual = pagina;
-        const url = `../../controller/PedidoController.php?action=listar&pagina=${pagina}&busqueda=${encodeURIComponent(busquedaActual)}&estado=${estadoActual}`;
+        
+        // Construcción de URL con todos los parámetros
+        const url = `../../controller/PedidoController.php?action=listar&pagina=${pagina}&busqueda=${encodeURIComponent(busquedaActual)}&estado=${estadoActual}&desde=${fechaDesde}&hasta=${fechaHasta}`;
 
         tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-gray-500">Cargando...</td></tr>`;
 
@@ -37,6 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(err => console.error(err));
     }
 
+    // --- 4. RENDERIZADO (TARJETA vs TABLA) ---
     function renderizarTabla(lista) {
         tbody.innerHTML = '';
         if (!lista || lista.length === 0) {
@@ -45,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         lista.forEach(p => {
-            // --- Lógica de Colores y Estado ---
+            // Lógica de Colores
             let badgeColor = '';
             let icon = '';
             if (p.estado === 'Pendiente') {
@@ -59,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 icon = '<i class="fas fa-times-circle mr-1"></i>';
             }
 
-            // --- Lógica de Tillos ---
+            // Lógica de Tillos (Principal + Secundarios)
             let htmlTillos = `<div class="font-black text-gray-800 text-xl md:text-lg">#${sanitizeHTML(p.codigo_pedido)}</div>`;
             
             if (p.tillos_secundarios) {
@@ -71,13 +83,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 htmlTillos += `</div>`;
             }
 
-            // --- Lógica de Día en Español ---
+            // Lógica de Día en Español
             const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
             const fechaParts = p.fecha_entrega.split('-'); 
             const fechaObj = new Date(fechaParts[0], fechaParts[1] - 1, fechaParts[2]); 
             const nombreDia = diasSemana[fechaObj.getDay()];
 
-            // --- RENDERIZADO RESPONSIVE (CARD vs TABLE) ---
+            // HTML Dinámico
             tbody.innerHTML += `
                 <tr class="bg-white md:hover:bg-orange-50 transition border md:border-b border-gray-200 rounded-xl shadow-md md:shadow-none block md:table-row relative overflow-hidden">
                     
@@ -100,12 +112,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     </td>
                     
                     <td class="px-5 pb-2 md:py-3 md:px-6 align-top block md:table-cell">
-                        <span class="md:hidden text-xs font-bold text-gray-400 uppercase mb-1 block">Fecha de Entrega</span>
-                        <div class="flex md:block items-center gap-3">
-                            <div class="text-base md:text-sm font-semibold text-gray-700">${p.fecha_entrega}</div>
-                            <div class="text-xs md:text-[10px] font-bold text-orange-600 uppercase tracking-wide md:mb-1 bg-orange-50 md:bg-transparent px-2 md:px-0 rounded">${nombreDia}</div>
+                        <span class="md:hidden text-xs font-bold text-gray-400 uppercase mb-1 block">Entrega</span>
+                        <div class="text-xs font-bold text-orange-600 uppercase tracking-wider mb-1">${nombreDia}</div>
+                        <div class="text-xl md:text-lg font-black text-gray-800 leading-none mb-1">
+                            ${p.hora_entrega.substring(0, 5)} <span class="text-xs text-gray-400 font-normal">hrs</span>
                         </div>
-                        <div class="text-sm md:text-xs text-gray-400 mt-1"><i class="far fa-clock"></i> ${p.hora_entrega}</div>
+                        <div class="text-sm md:text-xs text-gray-400 font-medium">
+                            <i class="far fa-calendar-alt mr-1 text-[10px]"></i> ${p.fecha_entrega}
+                        </div>
                     </td>
                     
                     <td class="px-5 pb-2 md:py-3 md:px-6 align-top block md:table-cell">
@@ -160,7 +174,9 @@ document.addEventListener('DOMContentLoaded', function() {
         paginacionContainer.appendChild(btnNext);
     }
 
-    // Buscador con Debounce
+    // --- 5. EVENT LISTENERS ---
+
+    // Buscador con Debounce (Retraso para no saturar al escribir)
     buscador.addEventListener('input', (e) => {
         clearTimeout(timeoutBusqueda);
         timeoutBusqueda = setTimeout(() => {
@@ -169,9 +185,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 300);
     });
 
-    // Filtro por Estado
+    // Filtro Estado
     filtroEstado.addEventListener('change', (e) => {
         estadoActual = e.target.value;
         cargarPedidos(1);
     });
+
+    // Filtros de Fecha (Nuevos)
+    if(inpFechaDesde) {
+        inpFechaDesde.addEventListener('change', (e) => {
+            fechaDesde = e.target.value;
+            cargarPedidos(1);
+        });
+    }
+
+    if(inpFechaHasta) {
+        inpFechaHasta.addEventListener('change', (e) => {
+            fechaHasta = e.target.value;
+            cargarPedidos(1);
+        });
+    }
 });

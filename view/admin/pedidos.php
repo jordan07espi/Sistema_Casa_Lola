@@ -14,19 +14,33 @@ include '../partials/header.php';
 <div class="bg-white rounded-lg shadow-md overflow-hidden">
     <div class="p-4 border-b border-gray-100 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
         
-        <div class="flex items-center gap-2 w-full md:w-auto">
-            <span class="text-sm font-semibold text-gray-600">Filtrar por:</span>
-            <select id="filtroEstado" class="border-gray-300 rounded-lg text-sm focus:ring-orange-500 focus:border-orange-500 p-2 border">
-                <option value="">Todos los Estados</option>
-                <option value="Pendiente">Pendientes</option>
-                <option value="Entregado">Entregados</option>
-                <option value="Cancelado">Cancelados</option>
-            </select>
+        <div class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+            
+            <div class="w-full md:w-auto">
+                <span class="text-xs font-bold text-gray-500 block mb-1">Estado:</span>
+                <select id="filtroEstado" class="w-full md:w-40 border-gray-300 rounded-lg text-sm focus:ring-orange-500 focus:border-orange-500 p-2.5 border bg-white shadow-sm">
+                    <option value="">Todos</option>
+                    <option value="Pendiente">Pendientes</option>
+                    <option value="Entregado">Entregados</option>
+                    <option value="Cancelado">Cancelados</option>
+                </select>
+            </div>
+
+            <div class="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                <div class="w-full md:w-auto">
+                    <span class="text-xs font-bold text-gray-500 block mb-1">Desde:</span>
+                    <input type="date" id="fechaDesde" class="w-full md:w-auto border-gray-300 rounded-lg text-sm focus:ring-orange-500 focus:border-orange-500 p-2 border text-gray-700 shadow-sm">
+                </div>
+                <div class="w-full md:w-auto">
+                    <span class="text-xs font-bold text-gray-500 block mb-1">Hasta:</span>
+                    <input type="date" id="fechaHasta" class="w-full md:w-auto border-gray-300 rounded-lg text-sm focus:ring-orange-500 focus:border-orange-500 p-2 border text-gray-700 shadow-sm">
+                </div>
+            </div>
         </div>
 
-        <div class="relative w-full md:w-auto">
-            <input type="text" id="buscadorPedido" placeholder="Buscar por código o cliente..." class="pl-9 pr-4 py-2 border rounded-lg text-sm focus:ring-orange-500 focus:border-orange-500 w-full md:w-64">
-            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+        <div class="relative w-full md:w-auto mt-2 md:mt-0">
+            <input type="text" id="buscadorPedido" placeholder="Buscar por código o cliente..." class="pl-10 pr-4 py-2.5 border rounded-lg text-sm focus:ring-orange-500 focus:border-orange-500 w-full md:w-72 shadow-sm">
+            <i class="fas fa-search absolute left-3 top-3.5 text-gray-400"></i>
         </div>
     </div>
     
@@ -50,8 +64,8 @@ include '../partials/header.php';
     </div>
 
     <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 flex items-center justify-between sm:px-6">
-        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <p class="text-sm text-gray-700">Total: <span class="font-medium" id="txtTotal">0</span> pedidos</p>
+        <div class="w-full flex items-center justify-between">
+            <p class="text-sm text-gray-700">Total: <span class="font-bold text-orange-600" id="txtTotal">0</span> pedidos</p>
             <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
                 <div id="paginacionContainer" class="flex gap-1"></div>
             </nav>

@@ -11,8 +11,9 @@ class PedidoDAO {
         $this->conexion = $db->getConnection();
     }
 
-    public function listar($inicio, $limite, $busqueda = '', $filtroEstado = '') {
-        // SELECT con subconsulta para obtener los códigos adicionales en una sola celda
+    // LISTAR: Con filtros de Búsqueda, Estado y Rango de Fechas
+    public function listar($inicio, $limite, $busqueda = '', $filtroEstado = '', $desde = '', $hasta = '') {
+        // SELECT con subconsulta para obtener los códigos adicionales (tillos_secundarios)
         $sql = "SELECT p.*, c.nombre AS nombre_cliente, u.nombre_completo AS nombre_usuario,
                 (
                     SELECT GROUP_CONCAT(pt.codigo_tillo SEPARATOR ',')
@@ -26,9 +27,66 @@ class PedidoDAO {
                 INNER JOIN usuarios u ON p.id_usuario = u.id_usuario 
                 WHERE 1=1"; 
 
+        // 1. Filtro de Búsqueda (Código Principal, Cliente o Tillos Secundarios)
         if (!empty($busqueda)) {
-            // CAMBIO: Agregamos el OR EXISTS para buscar en la tabla de tillos secundarios
             $sql .= " AND (
+                p.codigo_pedido LIKE :busqueda 
+                OR c.nombre LIKE :busqueda
+                OR EXISTS (
+                    SELECT 1 FROM pedidos_tillos pt_search 
+                    WHERE pt_search.id_pedido = p.id_pedido 
+                    AND pt_search.codigo_tillo LIKE :busqueda
+                )
+            )";
+        }
+        
+        // 2. Filtro de Estado
+        if (!empty($filtroEstado)) {
+            $sql .= " AND p.estado = :estado";
+        }
+
+        // 3. Filtro de Rango de Fechas
+        if (!empty($desde) && !empty($hasta)) {
+            $sql .= " AND p.fecha_entrega BETWEEN :desde AND :hasta";
+        } elseif (!empty($desde)) {
+            $sql .= " AND p.fecha_entrega >= :desde";
+        } elseif (!empty($hasta)) {
+            $sql .= " AND p.fecha_entrega <= :hasta";
+        }
+
+        // Ordenamos por ID descendente (el último creado va primero)
+        $sql .= " ORDER BY p.id_pedido DESC LIMIT :inicio, :limite";
+
+        $stmt = $this->conexion->prepare($sql);
+
+        if (!empty($busqueda)) {
+            $stmt->bindValue(':busqueda', "%$busqueda%");
+        }
+        if (!empty($filtroEstado)) {
+            $stmt->bindValue(':estado', $filtroEstado);
+        }
+        if (!empty($desde)) {
+            $stmt->bindValue(':desde', $desde);
+        }
+        if (!empty($hasta)) {
+            $stmt->bindValue(':hasta', $hasta);
+        }
+
+        $stmt->bindValue(':inicio', (int)$inicio, PDO::PARAM_INT);
+        $stmt->bindValue(':limite', (int)$limite, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_CLASS, 'Pedido');
+    }
+
+    // CONTAR TOTAL: Debe tener los mismos filtros que listar para que la paginación coincida
+    public function contarTotal($busqueda = '', $filtroEstado = '', $desde = '', $hasta = '') {
+        $sql = "SELECT COUNT(*) FROM pedidos p 
+                INNER JOIN clientes c ON p.id_cliente = c.id_cliente 
+                WHERE 1=1";
+        
+        if (!empty($busqueda)) {
+             $sql .= " AND (
                 p.codigo_pedido LIKE :busqueda 
                 OR c.nombre LIKE :busqueda
                 OR EXISTS (
@@ -43,22 +101,31 @@ class PedidoDAO {
             $sql .= " AND p.estado = :estado";
         }
 
-        $sql .= " ORDER BY p.fecha_entrega DESC, p.hora_entrega DESC LIMIT :inicio, :limite";
-
+        if (!empty($desde) && !empty($hasta)) {
+            $sql .= " AND p.fecha_entrega BETWEEN :desde AND :hasta";
+        } elseif (!empty($desde)) {
+            $sql .= " AND p.fecha_entrega >= :desde";
+        } elseif (!empty($hasta)) {
+            $sql .= " AND p.fecha_entrega <= :hasta";
+        }
+        
         $stmt = $this->conexion->prepare($sql);
-
+        
         if (!empty($busqueda)) {
             $stmt->bindValue(':busqueda', "%$busqueda%");
         }
         if (!empty($filtroEstado)) {
             $stmt->bindValue(':estado', $filtroEstado);
         }
-
-        $stmt->bindValue(':inicio', (int)$inicio, PDO::PARAM_INT);
-        $stmt->bindValue(':limite', (int)$limite, PDO::PARAM_INT);
-        $stmt->execute();
+        if (!empty($desde)) {
+            $stmt->bindValue(':desde', $desde);
+        }
+        if (!empty($hasta)) {
+            $stmt->bindValue(':hasta', $hasta);
+        }
         
-        return $stmt->fetchAll(PDO::FETCH_CLASS, 'Pedido');
+        $stmt->execute();
+        return $stmt->fetchColumn();
     }
 
     public function obtenerPorId($id_pedido) {
@@ -85,8 +152,7 @@ class PedidoDAO {
         $stmtDet->execute();
         $pedido->detalles = $stmtDet->fetchAll(PDO::FETCH_ASSOC);
 
-        // 3. OBTENER TILLOS
-        // Es vital que esta consulta traiga 'id_producto'
+        // 3. OBTENER TILLOS (Incluyendo id_producto para la vista detallada)
         $sqlTillos = "SELECT codigo_tillo, estado, id_producto FROM pedidos_tillos WHERE id_pedido = :id";
         $stmtTillos = $this->conexion->prepare($sqlTillos);
         $stmtTillos->bindValue(':id', $id_pedido);
@@ -94,41 +160,6 @@ class PedidoDAO {
         $pedido->tillos = $stmtTillos->fetchAll(PDO::FETCH_ASSOC);
 
         return $pedido;
-    }
-
-    public function contarTotal($busqueda = '', $filtroEstado = '') {
-        $sql = "SELECT COUNT(*) FROM pedidos p 
-                INNER JOIN clientes c ON p.id_cliente = c.id_cliente 
-                WHERE 1=1";
-        
-        if (!empty($busqueda)) {
-             // CAMBIO: Misma lógica de búsqueda profunda
-             $sql .= " AND (
-                p.codigo_pedido LIKE :busqueda 
-                OR c.nombre LIKE :busqueda
-                OR EXISTS (
-                    SELECT 1 FROM pedidos_tillos pt_search 
-                    WHERE pt_search.id_pedido = p.id_pedido 
-                    AND pt_search.codigo_tillo LIKE :busqueda
-                )
-            )";
-        }
-        
-        if (!empty($filtroEstado)) {
-            $sql .= " AND p.estado = :estado";
-        }
-        
-        $stmt = $this->conexion->prepare($sql);
-        
-        if (!empty($busqueda)) {
-            $stmt->bindValue(':busqueda', "%$busqueda%");
-        }
-        if (!empty($filtroEstado)) {
-            $stmt->bindValue(':estado', $filtroEstado);
-        }
-        
-        $stmt->execute();
-        return $stmt->fetchColumn();
     }
     
     public function verificarTilloOcupado($codigo_tillo) {
@@ -148,6 +179,7 @@ class PedidoDAO {
             // Usamos el primer tillo como código principal si existe, sino un genérico
             $codigoPrincipal = !empty($tillosArray) ? $tillosArray[0]['codigo'] : 'S/T-' . time();
             
+            // Insertar Cabecera del Pedido
             $sql = "INSERT INTO pedidos (codigo_pedido, id_cliente, id_usuario, fecha_entrega, hora_entrega, total, observaciones, evidencia_foto, estado) 
                     VALUES (:codigo, :cliente, :usuario, :fecha, :hora, :total, :obs, :foto, 'Pendiente')";
             $stmt = $this->conexion->prepare($sql);
@@ -162,6 +194,7 @@ class PedidoDAO {
             $stmt->execute();
             $id_pedido = $this->conexion->lastInsertId();
 
+            // Insertar Detalles (Productos)
             $sqlDetalle = "INSERT INTO detalles_pedido (id_pedido, id_producto, cantidad) VALUES (:id_pedido, :id_producto, :cantidad)";
             $stmtDetalle = $this->conexion->prepare($sqlDetalle);
             foreach ($detalles as $detalle) {
@@ -173,6 +206,7 @@ class PedidoDAO {
                 }
             }
 
+            // Insertar Tillos (Con relación al Producto)
             $sqlTillo = "INSERT INTO pedidos_tillos (id_pedido, codigo_tillo, id_producto, estado) VALUES (:id_pedido, :codigo, :id_producto, 'Pendiente')";
             $stmtTillo = $this->conexion->prepare($sqlTillo);
             
@@ -199,7 +233,7 @@ class PedidoDAO {
         $stmt->bindValue(':estado', $nuevo_estado);
         $stmt->bindValue(':id', $id_pedido);
         
-        // Opcional: Si el estado es Entregado, actualizamos también la tabla de tillos
+        // Si el estado es Entregado, actualizamos también la tabla de tillos
         if($nuevo_estado === 'Entregado'){
             $sql2 = "UPDATE pedidos_tillos SET estado = 'Entregado' WHERE id_pedido = :id";
             $stmt2 = $this->conexion->prepare($sql2);

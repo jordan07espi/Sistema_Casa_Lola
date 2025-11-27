@@ -13,6 +13,7 @@ $pedidoDAO = new PedidoDAO();
 
 try {
     switch ($action) {
+        // --- 1. VERIFICAR SI UN TILLO ESTÁ OCUPADO ---
         case 'verificar_tillo':
             $codigo = $_POST['codigo_pedido'] ?? '';
             $ocupado = $pedidoDAO->verificarTilloOcupado($codigo);
@@ -20,10 +21,11 @@ try {
             $response['ocupado'] = $ocupado;
             break;
 
+        // --- 2. REGISTRAR UN NUEVO PEDIDO ---
         case 'registrar':
-            // --- NUEVA LÓGICA DE RECEPCIÓN DE TILLOS ---
+            // A. Procesar Tillos (Array multidimensional: [id_producto] => [codigos...])
             $mapaTillos = $_POST['tillos_asignados'] ?? []; 
-            $tillosParaGuardar = []; // Estructura: ['codigo' => '...', 'id_producto' => 1]
+            $tillosParaGuardar = []; // Estructura plana final: [['codigo' => '...', 'id_producto' => 1], ...]
 
             // Aplanamos el array para validación y guardado
             foreach ($mapaTillos as $idProd => $codigos) {
@@ -37,34 +39,30 @@ try {
                 }
             }
 
-            // 1. Validar ocupados
-            if (empty($tillosParaGuardar)) {
-                // Nota: Podrías permitir pedidos sin tillos si son solo guarniciones
-                // pero si quieres obligar, deja este check.
-            }
-
+            // B. Validar si algún tillo ya está ocupado (Seguridad en servidor)
             foreach ($tillosParaGuardar as $item) {
                 if ($pedidoDAO->verificarTilloOcupado($item['codigo'])) {
-                    $response['message'] = "El Tillo {$item['codigo']} ya está ocupado.";
+                    $response['message'] = "El Tillo {$item['codigo']} ya está ocupado. Por favor verifique.";
                     echo json_encode($response);
                     exit;
                 }
             }
 
-            // 2. Manejo de la Imagen (Igual que antes) ...
+            // C. Manejo de la Imagen (Evidencia)
             $rutaFoto = null;
             if (isset($_FILES['evidencia_foto']) && $_FILES['evidencia_foto']['error'] === UPLOAD_ERR_OK) {
                 $nombreArchivo = uniqid() . '_' . basename($_FILES['evidencia_foto']['name']);
                 $directorio = '../uploads/evidencias/';
+                
                 if (!is_dir($directorio)) mkdir($directorio, 0777, true);
+
                 if (move_uploaded_file($_FILES['evidencia_foto']['tmp_name'], $directorio . $nombreArchivo)) {
                     $rutaFoto = $nombreArchivo;
                 }
             }
 
-            // 3. Crear Objeto Pedido
+            // D. Crear Objeto Pedido (Datos Cabecera)
             $pedido = new Pedido();
-            // Ya no asignamos un solo código aquí, lo maneja el DAO con el array
             $pedido->id_cliente = $_POST['id_cliente'];
             $pedido->id_usuario = $_SESSION['id_usuario']; 
             $pedido->fecha_entrega = $_POST['fecha_entrega'];
@@ -73,7 +71,7 @@ try {
             $pedido->observaciones = $_POST['observaciones'];
             $pedido->evidencia_foto = $rutaFoto; 
 
-            // 4. Procesar Detalles (Productos)
+            // E. Procesar Detalles (Productos y Cantidades)
             $detalles = [];
             if (isset($_POST['productos']) && is_array($_POST['productos'])) {
                 foreach ($_POST['productos'] as $idProd => $cantidad) {
@@ -88,8 +86,7 @@ try {
                 break;
             }
 
-            // 5. Guardar (Enviamos el nuevo array estructurado)
-            // NOTA: Asegúrate de pasar $tillosParaGuardar en lugar de $tillos
+            // F. Guardar en Base de Datos
             if ($pedidoDAO->registrar($pedido, $detalles, $tillosParaGuardar)) {
                 $response['success'] = true;
                 $response['message'] = 'Pedido registrado correctamente.';
@@ -97,66 +94,26 @@ try {
                 $response['message'] = 'Error al guardar el pedido en la base de datos.';
             }
             break;
-
-            // 2. Manejo de la Imagen (Evidencia)
-            $rutaFoto = null;
-            if (isset($_FILES['evidencia_foto']) && $_FILES['evidencia_foto']['error'] === UPLOAD_ERR_OK) {
-                $nombreArchivo = uniqid() . '_' . basename($_FILES['evidencia_foto']['name']);
-                $directorio = '../uploads/evidencias/';
-                
-                if (!is_dir($directorio)) mkdir($directorio, 0777, true); // Crear carpeta si no existe
-
-                if (move_uploaded_file($_FILES['evidencia_foto']['tmp_name'], $directorio . $nombreArchivo)) {
-                    $rutaFoto = $nombreArchivo;
-                }
-            }
-
-            // 3. Crear Objeto Pedido
-            $pedido = new Pedido();
-            $pedido->codigo_pedido = $_POST['tillo'];
-            $pedido->id_cliente = $_POST['id_cliente'];
-            $pedido->id_usuario = $_SESSION['id_usuario']; // Del usuario logueado
-            $pedido->fecha_entrega = $_POST['fecha_entrega'];
-            $pedido->hora_entrega = $_POST['hora_entrega'];
-            $pedido->total = $_POST['precio_total']; // Precio abierto
-            $pedido->observaciones = $_POST['observaciones'];
-            $pedido->evidencia_foto = $rutaFoto;
-
-            // 4. Procesar Detalles (Productos dinámicos)
-            // Los productos vienen en el POST como array: productos[id_producto] = cantidad
-            $detalles = [];
-            if (isset($_POST['productos']) && is_array($_POST['productos'])) {
-                foreach ($_POST['productos'] as $idProd => $cantidad) {
-                    if ($cantidad > 0) {
-                        $detalles[] = ['id_producto' => $idProd, 'cantidad' => $cantidad];
-                    }
-                }
-            }
-
-            if (empty($detalles)) {
-                $response['message'] = 'Debe ingresar al menos una cantidad en los productos.';
-                break;
-            }
-
-            // 5. Guardar en BD
-            if ($pedidoDAO->registrar($pedido, $detalles)) {
-                $response['success'] = true;
-                $response['message'] = 'Pedido registrado correctamente.';
-            } else {
-                $response['message'] = 'Error al guardar el pedido en la base de datos.';
-            }
-            break;
             
+        // --- 3. LISTAR PEDIDOS (Con filtros) ---
         case 'listar':
-             // ... (Tu código existente de listar) ...
              $pagina = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
              $busqueda = isset($_GET['busqueda']) ? trim($_GET['busqueda']) : '';
              $filtroEstado = isset($_GET['estado']) ? trim($_GET['estado']) : '';
+             
+             // RECIBIR RANGO DE FECHAS
+             $desde = isset($_GET['desde']) ? trim($_GET['desde']) : '';
+             $hasta = isset($_GET['hasta']) ? trim($_GET['hasta']) : '';
+
              $limite = 10;
              $inicio = ($pagina - 1) * $limite;
-             $lista = $pedidoDAO->listar($inicio, $limite, $busqueda, $filtroEstado);
-             $totalRegistros = $pedidoDAO->contarTotal($busqueda, $filtroEstado);
+             
+             // PASAR AMBOS PARÁMETROS AL DAO
+             $lista = $pedidoDAO->listar($inicio, $limite, $busqueda, $filtroEstado, $desde, $hasta);
+             $totalRegistros = $pedidoDAO->contarTotal($busqueda, $filtroEstado, $desde, $hasta);
+             
              $totalPaginas = ceil($totalRegistros / $limite);
+             
              $response['success'] = true;
              $response['data'] = $lista;
              $response['pagination'] = [
@@ -166,6 +123,7 @@ try {
              ];
              break;
 
+        // --- 4. CAMBIAR ESTADO (Pendiente -> Entregado/Cancelado) ---
         case 'cambiar_estado':
             $id = $_POST['id_pedido'];
             $estado = $_POST['nuevo_estado'];
@@ -186,7 +144,7 @@ try {
             break;
     }
 } catch (Exception $e) {
-    $response['message'] = 'Error: ' . $e->getMessage();
+    $response['message'] = 'Error del servidor: ' . $e->getMessage();
 }
 
 echo json_encode($response);
