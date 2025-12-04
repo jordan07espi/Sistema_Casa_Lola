@@ -87,9 +87,12 @@ try {
             }
 
             // F. Guardar en Base de Datos
-            if ($pedidoDAO->registrar($pedido, $detalles, $tillosParaGuardar)) {
+            $resultado = $pedidoDAO->registrar($pedido, $detalles, $tillosParaGuardar);
+
+            if ($resultado !== false) { // Si no es false, es el ID
                 $response['success'] = true;
                 $response['message'] = 'Pedido registrado correctamente.';
+                $response['id_pedido'] = $resultado; // <--- ENVIAMOS EL ID AL JS
             } else {
                 $response['message'] = 'Error al guardar el pedido en la base de datos.';
             }

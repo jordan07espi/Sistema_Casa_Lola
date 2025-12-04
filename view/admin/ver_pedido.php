@@ -4,6 +4,7 @@ session_start();
 include '../partials/header.php';
 require_once '../../model/PedidoDAO.php';
 
+// Verificación de ID
 if (!isset($_GET['id']) || empty($_GET['id'])) {
     echo "<script>window.location.href = 'pedidos.php';</script>";
     exit();
@@ -29,12 +30,20 @@ $claseEstado = $estadoClasses[$p->estado] ?? 'bg-gray-100';
 
 <div class="max-w-3xl mx-auto pb-12">
     
-    <div class="flex justify-between items-center mb-6">
-        <a href="pedidos.php" class="text-gray-600 hover:text-orange-600 text-lg transition flex items-center gap-2">
-            <i class="fas fa-arrow-left"></i> Volver
-        </a>
-        <div class="text-sm text-gray-400">
-            Pedido #<?php echo $p->id_pedido; ?>
+    <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+        <div class="flex items-center gap-4 w-full sm:w-auto">
+            <a href="pedidos.php" class="text-gray-600 hover:text-orange-600 text-lg transition flex items-center gap-2">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+            
+            <button onclick="imprimirTicket(<?php echo $p->id_pedido; ?>)" 
+                class="bg-gray-800 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-700 transition text-sm flex items-center gap-2 font-medium">
+                <i class="fas fa-print"></i> Imprimir Comprobante
+            </button>
+        </div>
+
+        <div class="text-sm text-gray-400 font-mono">
+            Pedido #<?php echo $p->codigo_pedido; // Usamos codigo_pedido que es más legible ?>
         </div>
     </div>
 
@@ -46,7 +55,7 @@ $claseEstado = $estadoClasses[$p->estado] ?? 'bg-gray-100';
                     <i class="fas fa-user fa-2x text-white"></i>
                 </div>
                 <div>
-                    <h2 class="text-2xl font-bold tracking-wide"><?php echo htmlspecialchars($p->nombre_cliente); ?></h2>
+                    <h2 class="text-2xl font-bold tracking-wide uppercase"><?php echo htmlspecialchars($p->nombre_cliente); ?></h2>
                     <p class="text-gray-300 flex items-center gap-3 text-sm mt-1">
                         <span><i class="fas fa-id-card mr-1"></i> <?php echo htmlspecialchars($p->cedula); ?></span>
                         <span><i class="fas fa-phone mr-1"></i> <?php echo htmlspecialchars($p->telefono); ?></span>
@@ -69,7 +78,7 @@ $claseEstado = $estadoClasses[$p->estado] ?? 'bg-gray-100';
 
                 <ul class="space-y-6">
                     <?php 
-                    // Array auxiliar para saber qué tillos ya mostramos y no repetirlos abajo
+                    // Array auxiliar para no repetir tillos mostrados
                     $tillosMostrados = [];
                     ?>
 
@@ -86,8 +95,8 @@ $claseEstado = $estadoClasses[$p->estado] ?? 'bg-gray-100';
                             </div>
 
                             <?php 
+                            // Buscar tillos asociados a este producto
                             $tillosEsteProducto = array_filter($p->tillos, function($t) use ($prod) {
-                                // Usamos isset() para evitar el error "Undefined array key" si el dato no existe
                                 return isset($t['id_producto']) && $t['id_producto'] == $prod['id_producto'];
                             });
                             ?>
@@ -95,9 +104,7 @@ $claseEstado = $estadoClasses[$p->estado] ?? 'bg-gray-100';
                             <?php if (!empty($tillosEsteProducto)): ?>
                                 <div class="ml-8 flex flex-wrap gap-2 animate-fade-in-down">
                                     <?php foreach ($tillosEsteProducto as $tillo): 
-                                        // Marcamos este tillo como mostrado para no repetirlo luego
                                         $tillosMostrados[] = $tillo['codigo_tillo'];
-                                        
                                         $colorTillo = ($tillo['estado'] === 'Entregado') ? 'bg-green-100 text-green-700 border-green-200' : 'bg-white text-gray-600 border-gray-300';
                                     ?>
                                         <div class="flex items-center gap-2 border <?php echo $colorTillo; ?> px-3 py-1 rounded-md shadow-sm text-sm">
@@ -117,7 +124,7 @@ $claseEstado = $estadoClasses[$p->estado] ?? 'bg-gray-100';
                 </ul>
 
                 <?php 
-                // Filtramos los tillos que NO están en la lista de mostrados
+                // Tillos huérfanos o antiguos (sin id_producto asociado)
                 $tillosSinAsignar = array_filter($p->tillos, function($t) use ($tillosMostrados) {
                     return !in_array($t['codigo_tillo'], $tillosMostrados);
                 });
@@ -126,7 +133,7 @@ $claseEstado = $estadoClasses[$p->estado] ?? 'bg-gray-100';
                 <?php if (!empty($tillosSinAsignar)): ?>
                     <div class="mt-8 pt-6 border-t border-dashed border-gray-300">
                         <p class="text-xs font-bold text-gray-400 uppercase mb-3">
-                            <i class="fas fa-exclamation-circle"></i> Etiquetas sin producto específico (Antiguos)
+                            <i class="fas fa-exclamation-circle"></i> Etiquetas adicionales
                         </p>
                         <div class="flex flex-wrap gap-2">
                             <?php foreach ($tillosSinAsignar as $tillo): 
@@ -165,11 +172,8 @@ $claseEstado = $estadoClasses[$p->estado] ?? 'bg-gray-100';
                         </p>
                         
                         <?php 
-                            // 1. Array de días (0=Domingo, 1=Lunes...)
                             $diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-                            // 2. Obtenemos el número del día de la fecha
                             $numDia = date('w', strtotime($p->fecha_entrega));
-                            // 3. Obtenemos el nombre
                             $nombreDia = $diasSemana[$numDia];
                         ?>
                         <p class="text-sm text-orange-600 font-bold ml-7 uppercase tracking-wider mt-1">
@@ -180,7 +184,14 @@ $claseEstado = $estadoClasses[$p->estado] ?? 'bg-gray-100';
                         <p class="text-xs text-gray-400">Hora</p>
                         <p class="text-lg font-semibold text-gray-800">
                             <i class="far fa-clock mr-2 text-orange-500"></i>
-                            <?php echo $p->hora_entrega; ?>
+                            <?php echo substr($p->hora_entrega, 0, 5); // Formato HH:MM ?>
+                        </p>
+                    </div>
+                    
+                    <div class="mb-4 pt-4 border-t border-gray-200">
+                        <p class="text-xs text-gray-400">Vendedor</p>
+                        <p class="text-sm font-medium text-gray-600 uppercase">
+                            <i class="fas fa-user-edit mr-1"></i> <?php echo htmlspecialchars($p->nombre_usuario); ?>
                         </p>
                     </div>
                 </div>
@@ -229,6 +240,7 @@ $claseEstado = $estadoClasses[$p->estado] ?? 'bg-gray-100';
 </div>
 
 <script>
+    // Función para cambiar estado (Entregar/Cancelar)
     function cambiarEstado(id, nuevoEstado) {
         let mensaje = nuevoEstado === 'Entregado' 
             ? '¿Confirmar entrega del pedido? \n\nSe marcarán todos los tillos como entregados.' 
@@ -251,6 +263,14 @@ $claseEstado = $estadoClasses[$p->estado] ?? 'bg-gray-100';
                 }
             })
             .catch(err => console.error(err));
+    }
+
+    // --- NUEVA FUNCIÓN PARA IMPRIMIR ---
+    function imprimirTicket(id) {
+        // Abre la ventana popup centrada o en nueva pestaña según navegador
+        const url = `ticket.php?id=${id}`;
+        // Configuración para ventana tipo "popup" de sistema
+        window.open(url, 'ImprimirTicket', 'width=400,height=600,scrollbars=yes');
     }
 </script>
 

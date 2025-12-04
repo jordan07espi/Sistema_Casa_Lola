@@ -1,6 +1,6 @@
 /**
  * Archivo: view/assets/js/nuevo_pedido.js
- * Descripción: Lógica completa para el ingreso de pedidos con múltiples tillos y gestión de clientes.
+ * Descripción: Lógica completa para el ingreso de pedidos con gestión de impresión de tickets.
  */
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -31,9 +31,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function generarCamposTillo() {
-        // Nota: Esta función reconstruye los inputs. 
-        // Mejora posible: conservar valores ya escritos si se aumenta la cantidad.
-        
         // Guardar valores actuales temporalmente para intentar restaurarlos (UX básica)
         const valoresPrevios = {}; 
         document.querySelectorAll('.input-tillo-dinamico').forEach(inp => {
@@ -318,8 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data.success) {
                         alert('Cliente registrado correctamente.');
                         cerrarModal();
-                        // Recargar la página es la forma más segura de actualizar el datalist
-                        // (Opcional: podrías agregar el option al DOM manualmente)
+                        // Recargar la página para actualizar el datalist
                         location.reload(); 
                     } else {
                         if (data.message.toLowerCase().includes('cédula')) {
@@ -387,8 +383,29 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    alert('¡Pedido registrado con éxito!');
-                    window.location.href = 'pedidos.php';
+                    // --- MODIFICACIÓN: Lógica de Impresión de Ticket ---
+                    // Confirmar si el usuario desea imprimir el comprobante
+                    if (confirm('¡Pedido registrado con éxito! \n¿Desea imprimir el comprobante ahora?')) {
+                        // Usamos el id_pedido que debe devolver el controlador actualizado
+                        const idPedido = data.id_pedido || ''; 
+                        
+                        if(idPedido) {
+                            // Ruta relativa a donde está este JS (view/assets/js) -> subir 2 niveles -> view/admin/ticket.php
+                            // Sin embargo, este JS se ejecuta en nuevo_pedido.php, así que la ruta relativa es simple:
+                            const urlTicket = `ticket.php?id=${idPedido}`;
+                            
+                            // Abrimos ventana popup configurada para ticket
+                            window.open(urlTicket, 'ImprimirTicket', 'width=400,height=600,scrollbars=yes');
+                        } else {
+                            alert("El pedido se guardó, pero no se recibió el ID para imprimir.");
+                        }
+                    }
+                    
+                    // Redirigir a la lista con un leve retraso para asegurar que el popup no sea bloqueado
+                    setTimeout(() => {
+                        window.location.href = 'pedidos.php';
+                    }, 500);
+
                 } else {
                     alert('Error del servidor: ' + data.message);
                     btnSubmit.disabled = false;
