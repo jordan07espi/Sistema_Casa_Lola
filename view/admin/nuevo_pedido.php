@@ -189,6 +189,10 @@ $prefijoTillo = date('Y') . '_';
                 <label class="block text-gray-700 font-medium mb-2">Nombre</label>
                 <input type="text" name="nombre" id="nombreQuick" class="w-full border-gray-300 rounded-lg px-4 py-2 border focus:outline-none focus:ring-2 focus:ring-orange-500" required>
             </div>
+            <div class="mb-4">
+                <label class="block text-gray-700 font-medium mb-2">Email (Opcional)</label>
+                <input type="email" name="email" id="emailQuick" class="w-full border-gray-300 rounded-lg px-4 py-2 border focus:outline-none focus:ring-2 focus:ring-orange-500">
+            </div>
             <div class="mb-6">
                 <label class="block text-gray-700 font-medium mb-2">Teléfono</label>
                 <input type="text" name="telefono" id="telefonoQuick" class="w-full border-gray-300 rounded-lg px-4 py-2 border transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500" maxlength="10" required>

@@ -55,22 +55,28 @@ class ClienteDAO {
         return $stmt->fetchColumn();
     }
 
-    // ... (Mantener métodos agregar, actualizar, eliminar, obtenerPorId y existeCedula IGUALES) ...
+
+    // Buscar el método agregar y cambiar por:
     public function agregar(Cliente $cliente) {
         if ($this->existeCedula($cliente->cedula)) return false; 
-        $sql = "INSERT INTO clientes (cedula, nombre, telefono) VALUES (:cedula, :nombre, :telefono)";
+        // Agregamos :email
+        $sql = "INSERT INTO clientes (cedula, nombre, email, telefono) VALUES (:cedula, :nombre, :email, :telefono)";
         $stmt = $this->conexion->prepare($sql);
         $stmt->bindValue(':cedula', $cliente->cedula);
         $stmt->bindValue(':nombre', $cliente->nombre);
+        $stmt->bindValue(':email', $cliente->email); // <--- NUEVO
         $stmt->bindValue(':telefono', $cliente->telefono);
         return $stmt->execute();
     }
 
+    // Buscar el método actualizar y cambiar por:
     public function actualizar(Cliente $cliente) {
-        $sql = "UPDATE clientes SET nombre = :nombre, cedula = :cedula, telefono = :telefono WHERE id_cliente = :id";
+        // Agregamos :email
+        $sql = "UPDATE clientes SET nombre = :nombre, cedula = :cedula, email = :email, telefono = :telefono WHERE id_cliente = :id";
         $stmt = $this->conexion->prepare($sql);
         $stmt->bindValue(':nombre', $cliente->nombre);
         $stmt->bindValue(':cedula', $cliente->cedula);
+        $stmt->bindValue(':email', $cliente->email); // <--- NUEVO
         $stmt->bindValue(':telefono', $cliente->telefono);
         $stmt->bindValue(':id', $cliente->id_cliente);
         return $stmt->execute();

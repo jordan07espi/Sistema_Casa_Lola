@@ -31,19 +31,24 @@ $claseEstado = $estadoClasses[$p->estado] ?? 'bg-gray-100';
 <div class="max-w-3xl mx-auto pb-12">
     
     <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-        <div class="flex items-center gap-4 w-full sm:w-auto">
-            <a href="pedidos.php" class="text-gray-600 hover:text-orange-600 text-lg transition flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+            <a href="pedidos.php" class="text-gray-600 hover:text-orange-600 text-lg transition flex items-center gap-2 mr-2">
                 <i class="fas fa-arrow-left"></i> Volver
             </a>
             
             <button onclick="imprimirTicket(<?php echo $p->id_pedido; ?>)" 
                 class="bg-gray-800 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-700 transition text-sm flex items-center gap-2 font-medium">
-                <i class="fas fa-print"></i> Imprimir Comprobante
+                <i class="fas fa-print"></i> Imprimir
+            </button>
+
+            <button onclick="enviarWhatsApp()" 
+                class="bg-green-500 text-white px-4 py-2 rounded-lg shadow hover:bg-green-600 transition text-sm flex items-center gap-2 font-medium">
+                <i class="fab fa-whatsapp fa-lg"></i> Enviar WhatsApp
             </button>
         </div>
 
         <div class="text-sm text-gray-400 font-mono">
-            Pedido #<?php echo $p->codigo_pedido; // Usamos codigo_pedido que es más legible ?>
+            Pedido #<?php echo $p->codigo_pedido; ?>
         </div>
     </div>
 
@@ -78,7 +83,6 @@ $claseEstado = $estadoClasses[$p->estado] ?? 'bg-gray-100';
 
                 <ul class="space-y-6">
                     <?php 
-                    // Array auxiliar para no repetir tillos mostrados
                     $tillosMostrados = [];
                     ?>
 
@@ -124,7 +128,7 @@ $claseEstado = $estadoClasses[$p->estado] ?? 'bg-gray-100';
                 </ul>
 
                 <?php 
-                // Tillos huérfanos o antiguos (sin id_producto asociado)
+                // Tillos huérfanos o antiguos
                 $tillosSinAsignar = array_filter($p->tillos, function($t) use ($tillosMostrados) {
                     return !in_array($t['codigo_tillo'], $tillosMostrados);
                 });
@@ -184,7 +188,7 @@ $claseEstado = $estadoClasses[$p->estado] ?? 'bg-gray-100';
                         <p class="text-xs text-gray-400">Hora</p>
                         <p class="text-lg font-semibold text-gray-800">
                             <i class="far fa-clock mr-2 text-orange-500"></i>
-                            <?php echo substr($p->hora_entrega, 0, 5); // Formato HH:MM ?>
+                            <?php echo substr($p->hora_entrega, 0, 5); ?>
                         </p>
                     </div>
                     
@@ -240,7 +244,7 @@ $claseEstado = $estadoClasses[$p->estado] ?? 'bg-gray-100';
 </div>
 
 <script>
-    // Función para cambiar estado (Entregar/Cancelar)
+    // 1. Función para cambiar estado
     function cambiarEstado(id, nuevoEstado) {
         let mensaje = nuevoEstado === 'Entregado' 
             ? '¿Confirmar entrega del pedido? \n\nSe marcarán todos los tillos como entregados.' 
@@ -265,12 +269,53 @@ $claseEstado = $estadoClasses[$p->estado] ?? 'bg-gray-100';
             .catch(err => console.error(err));
     }
 
-    // --- NUEVA FUNCIÓN PARA IMPRIMIR ---
+    // 2. Función para Imprimir
     function imprimirTicket(id) {
-        // Abre la ventana popup centrada o en nueva pestaña según navegador
         const url = `ticket.php?id=${id}`;
-        // Configuración para ventana tipo "popup" de sistema
         window.open(url, 'ImprimirTicket', 'width=400,height=600,scrollbars=yes');
+    }
+
+    // 3. NUEVA FUNCIÓN: ENVIAR POR WHATSAPP
+    function enviarWhatsApp() {
+        // Datos inyectados desde PHP
+        const telefono = "<?php echo $p->telefono; ?>";
+        const nombre = "<?php echo $p->nombre_cliente; ?>";
+        const codigo = "<?php echo $p->codigo_pedido; ?>";
+        const total = "<?php echo number_format($p->total, 2); ?>";
+        const fecha = "<?php echo $p->fecha_entrega; ?>";
+        const hora = "<?php echo substr($p->hora_entrega, 0, 5); ?>";
+        
+        // Limpiar teléfono para formato internacional (Ecuador)
+        let phoneClean = telefono.replace(/\D/g, ''); // Quitar no numéricos
+        
+        if (phoneClean.startsWith('0')) {
+            phoneClean = '593' + phoneClean.substring(1); // Reemplazar 0 inicial con 593
+        } else if (phoneClean.length === 9) {
+            phoneClean = '593' + phoneClean; // Si falta el 0 pero tiene 9 dígitos
+        }
+        // Si ya tiene 593 al inicio, se deja igual.
+
+        // Construir detalle de productos
+        let detalleTexto = "";
+        <?php foreach ($p->detalles as $d): ?>
+            // Usamos codificación URL para caracteres especiales
+            detalleTexto += "▪ <?php echo $d['cantidad']; ?> x <?php echo urlencode($d['nombre_producto']); ?>%0A";
+        <?php endforeach; ?>
+
+        // Mensaje estructurado con formato de WhatsApp (*negrita*, %0A salto de línea)
+        const mensaje = `Hola *${nombre}*! 👋%0A%0A` +
+                        `Su pedido en *CASA LOLA* ha sido registrado.%0A` +
+                        `--------------------------------%0A` +
+                        `🧾 *Orden:* ${codigo}%0A` +
+                        `📅 *Entrega:* ${fecha} ${hora}%0A` +
+                        `💰 *Total:* $${total}%0A` +
+                        `--------------------------------%0A` +
+                        `*Detalle:*%0A${detalleTexto}%0A` +
+                        `¡Gracias por su preferencia! 🐷🔥`;
+
+        // Abrir API de WhatsApp
+        const url = `https://wa.me/${phoneClean}?text=${mensaje}`;
+        window.open(url, '_blank');
     }
 </script>
 

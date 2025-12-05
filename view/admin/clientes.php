@@ -76,6 +76,13 @@ include '../partials/header.php';
                     class="w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 px-4 py-2 border" 
                     placeholder="Ej: ANDREA SORIANO" required>
             </div>
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 font-medium mb-2">Correo Electrónico</label>
+                <input type="email" name="email" id="email" 
+                    class="w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 px-4 py-2 border" 
+                    placeholder="cliente@ejemplo.com">
+            </div>
 
             <div class="mb-6">
                 <label class="block text-gray-700 font-medium mb-2">Teléfono</label>

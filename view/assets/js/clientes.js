@@ -1,7 +1,7 @@
 /**
  * Archivo: view/assets/js/clientes.js
  * Descripción: Gestión completa de clientes con validaciones (Ecuador),
- * paginación, búsqueda en servidor y modal.
+ * paginación, búsqueda en servidor, modal y soporte para Email.
  */
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Inputs del formulario
     const inpCedula = document.getElementById('cedula');
     const inpNombre = document.getElementById('nombre');
+    const inpEmail = document.getElementById('email'); // <--- NUEVA REFERENCIA
     const inpTelefono = document.getElementById('telefono');
     
     // Contenedores de error
@@ -87,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const url = `../../controller/ClienteController.php?action=listar&pagina=${pagina}&busqueda=${encodeURIComponent(busquedaActual)}`;
         
         // Efecto de carga
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">Cargando...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">Cargando...</td></tr>`;
 
         fetch(url)
             .then(res => res.json())
@@ -96,24 +97,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     renderizarTabla(data.data);
                     renderizarPaginacion(data.pagination);
                 } else {
-                    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-red-500">${data.message}</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-red-500">${data.message}</td></tr>`;
                 }
             })
             .catch(err => {
                 console.error(err);
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-red-500">Error de conexión.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-red-500">Error de conexión.</td></tr>`;
             });
     }
 
     function renderizarTabla(lista) {
         tbody.innerHTML = '';
         if (!lista || lista.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">No se encontraron resultados.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">No se encontraron resultados.</td></tr>`;
             return;
         }
 
         lista.forEach(c => {
             // Diseño Responsivo: Card en Móvil / Tabla en Desktop
+            // NOTA: Se ha agregado una fila visual para el Email si lo deseas mostrar, 
+            // aunque en móvil podría ocupar espacio, aquí lo dejo disponible.
             tbody.innerHTML += `
                 <tr class="bg-white border md:border-b border-gray-200 block md:table-row rounded-xl shadow-sm md:shadow-none mb-4 md:mb-0 hover:bg-orange-50 transition">
                     
@@ -124,7 +127,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     <td class="p-4 md:py-3 md:px-6 block md:table-cell border-b md:border-none">
                         <span class="md:hidden text-xs font-bold text-gray-400 uppercase mb-1 block">Cliente</span>
-                        <span class="font-medium text-gray-800 uppercase">${sanitizeHTML(c.nombre)}</span>
+                        <div class="flex flex-col">
+                            <span class="font-medium text-gray-800 uppercase">${sanitizeHTML(c.nombre)}</span>
+                            ${c.email ? `<span class="text-xs text-gray-400 lowercase">${sanitizeHTML(c.email)}</span>` : ''}
+                        </div>
                     </td>
 
                     <td class="p-4 md:py-3 md:px-6 block md:table-cell border-b md:border-none">
@@ -154,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const totalPaginas = pagination.total_paginas;
         const current = pagination.pagina_actual;
 
-        if (totalPaginas <= 1) return; // No mostrar paginación si solo hay 1 página
+        if (totalPaginas <= 1) return; 
 
         // Botón Anterior
         const btnPrev = document.createElement('button');
@@ -165,7 +171,6 @@ document.addEventListener('DOMContentLoaded', function() {
         paginacionContainer.appendChild(btnPrev);
 
         // Números de Página
-        // Lógica simple: mostrar todas las páginas (se puede mejorar para rangos grandes)
         for (let i = 1; i <= totalPaginas; i++) {
             const btn = document.createElement('button');
             btn.textContent = i;
@@ -231,8 +236,8 @@ document.addEventListener('DOMContentLoaded', function() {
         clearTimeout(timeoutBusqueda);
         timeoutBusqueda = setTimeout(() => {
             busquedaActual = e.target.value;
-            cargarClientes(1); // Siempre volver a página 1 al buscar
-        }, 300); // Esperar 300ms antes de enviar la petición
+            cargarClientes(1); 
+        }, 300); 
     });
 
     // --- 8. ENVÍO DEL FORMULARIO (GUARDAR/EDITAR) ---
@@ -264,12 +269,9 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     cerrarModal();
-                    // Al guardar nuevo, vamos a la página 1 para ver el registro reciente
-                    // Al editar, mantenemos la página actual (opcional, aquí reseteamos a 1 por simplicidad)
                     cargarClientes(1);
                     // Opcional: Mostrar Toast/Alerta de éxito
                 } else {
-                    // Manejo de errores del servidor (ej. duplicados)
                     if (data.message.toLowerCase().includes('cédula')) {
                          mostrarError(inpCedula, errorCedula, data.message);
                     } else {
@@ -289,6 +291,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         inpCedula.value = cliente.cedula;
         inpNombre.value = cliente.nombre;
+        
+        // --- CAMBIO: Cargar el email si existe ---
+        if(inpEmail) {
+            inpEmail.value = cliente.email || ''; 
+        }
+
         inpTelefono.value = cliente.telefono;
         
         // Limpiar errores previos
@@ -308,7 +316,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
-                        cargarClientes(paginaActual); // Recargar página actual
+                        cargarClientes(paginaActual); 
                     } else {
                         alert(data.message);
                     }
@@ -321,6 +329,9 @@ document.addEventListener('DOMContentLoaded', function() {
         limpiarError(inpCedula, errorCedula);
         limpiarError(inpTelefono, errorTelefono);
         
+        // --- CAMBIO: Limpiar explícitamente el email ---
+        if(inpEmail) inpEmail.value = '';
+
         document.getElementById('modalTitle').textContent = 'Nuevo Cliente';
         document.getElementById('action').value = 'agregar';
         document.getElementById('id_cliente').value = '';
@@ -333,7 +344,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Listeners del modal
-    btnNuevo.addEventListener('click', abrirModal);
-    btnCerrar.addEventListener('click', cerrarModal);
-    btnCancelar.addEventListener('click', cerrarModal);
+    if(btnNuevo) btnNuevo.addEventListener('click', abrirModal);
+    if(btnCerrar) btnCerrar.addEventListener('click', cerrarModal);
+    if(btnCancelar) btnCancelar.addEventListener('click', cerrarModal);
 });

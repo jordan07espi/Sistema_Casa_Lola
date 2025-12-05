@@ -69,6 +69,7 @@ switch ($action) {
             $cliente = new Cliente();
             $cliente->cedula = $cedula;
             $cliente->nombre = mb_strtoupper(trim($_POST['nombre']), 'UTF-8'); // Mayúsculas servidor
+            $cliente->email = trim($_POST['email'] ?? '');
             $cliente->telefono = trim($_POST['telefono']);
 
             if ($clienteDAO->agregar($cliente)) {
@@ -110,6 +111,7 @@ switch ($action) {
             $cliente->id_cliente = $id;
             $cliente->cedula = $cedula;
             $cliente->nombre = mb_strtoupper(trim($_POST['nombre']), 'UTF-8');
+            $cliente->email = trim($_POST['email'] ?? '');
             $cliente->telefono = trim($_POST['telefono']);
 
             if ($clienteDAO->actualizar($cliente)) {

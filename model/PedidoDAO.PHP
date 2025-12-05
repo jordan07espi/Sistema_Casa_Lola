@@ -220,12 +220,12 @@ class PedidoDAO {
             }
             
             $this->conexion->commit();
-            $id_pedido = $this->conexion->lastInsertId(); // Capturamos el ID
-        
-            $this->conexion->commit();
-            return $id_pedido; // <--- CAMBIO IMPORTANTE: Devolvemos el ID
+            return $id_pedido;         
+            
         } catch (Exception $e) {
-            $this->conexion->rollBack();
+            if ($this->conexion->inTransaction()) {
+                $this->conexion->rollBack();
+            }
             return false;
         }
     }
