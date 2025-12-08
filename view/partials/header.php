@@ -40,6 +40,17 @@ $rolUsuario = $_SESSION['rol'] ?? 'Invitado';
     <title>Casa Lola - Gestión</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Animación suave para nuevos pedidos en cocina */
+        @keyframes bounceIn {
+            0% { transform: scale(0.9); opacity: 0; }
+            60% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+        .animate-bounce-in {
+            animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+    </style>
 </head>
 <body class="bg-gray-100 flex flex-col min-h-screen font-sans"> 
 
@@ -67,6 +78,10 @@ $rolUsuario = $_SESSION['rol'] ?? 'Invitado';
                 <?php if ($rolUsuario === 'Administrador' || $rolUsuario === 'Empleado') : ?>
                     <a href="pedidos.php" class="hover:text-orange-400 transition-colors flex items-center gap-2">
                         <i class="fas fa-utensils"></i> Pedidos
+                    </a>
+                    
+                    <a href="cocina.php" class="hover:text-orange-400 transition-colors flex items-center gap-2 text-orange-100 font-bold bg-orange-800 bg-opacity-30 px-3 py-1 rounded-md">
+                        <i class="fas fa-fire-burner"></i> Cocina
                     </a>
                     
                     <a href="clientes.php" class="hover:text-orange-400 transition-colors flex items-center gap-2">
@@ -115,6 +130,11 @@ $rolUsuario = $_SESSION['rol'] ?? 'Invitado';
                 <a href="pedidos.php" class="block px-4 py-3 text-white hover:bg-gray-700 hover:text-orange-400 border-b border-gray-700">
                     <i class="fas fa-utensils w-6 text-center"></i> Pedidos
                 </a>
+                
+                <a href="cocina.php" class="block px-4 py-3 text-white bg-orange-900 bg-opacity-20 hover:bg-gray-700 hover:text-orange-400 border-b border-gray-700 font-bold">
+                    <i class="fas fa-fire-burner w-6 text-center"></i> Cocina
+                </a>
+
                 <a href="clientes.php" class="block px-4 py-3 text-white hover:bg-gray-700 hover:text-orange-400 border-b border-gray-700">
                     <i class="fas fa-users w-6 text-center"></i> Clientes
                 </a>
