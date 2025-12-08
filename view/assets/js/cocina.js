@@ -3,33 +3,62 @@
 document.addEventListener('DOMContentLoaded', function() {
     const contenedor = document.getElementById('contenedorCocina');
     const indicador = document.getElementById('indicadorConexion');
+    const audio = document.getElementById('audioAlerta');
+    const pantallaInicio = document.getElementById('pantallaInicio');
+    const btnActivar = document.getElementById('btnActivarAudio');
+    
     let pedidosPrevios = new Set();
+    let audioHabilitado = false; // Bandera de seguridad
 
-    // Iniciar conexión SSE
-    const evtSource = new EventSource('../../controller/CocinaSSE.php');
+    // --- 1. ACTIVACIÓN DE AUDIO (Usuario debe interactuar primero) ---
+    btnActivar.addEventListener('click', function() {
+        // Intentar reproducir y pausar inmediatamente para "desbloquear" el audio en el navegador
+        audio.play().then(() => {
+            audio.pause();
+            audio.currentTime = 0;
+            audioHabilitado = true;
+            
+            // Ocultar pantalla de bloqueo
+            pantallaInicio.style.opacity = '0';
+            setTimeout(() => {
+                pantallaInicio.style.display = 'none';
+                iniciarSSE(); // Conectar al servidor solo después de activar
+            }, 500);
+        }).catch(err => {
+            console.error("Error activando audio:", err);
+            alert("No se pudo activar el audio. Revise permisos del navegador.");
+        });
+    });
 
-    evtSource.onmessage = function(event) {
-        const pedidos = JSON.parse(event.data);
-        renderizarCocina(pedidos);
-    };
+    // --- 2. LÓGICA SSE ---
+    function iniciarSSE() {
+        const evtSource = new EventSource('../../controller/CocinaSSE.php');
 
-    evtSource.onerror = function() {
-        console.error("Error en conexión SSE");
-        indicador.className = "flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg font-bold";
-        indicador.innerHTML = '<div class="w-3 h-3 bg-red-600 rounded-full"></div> Desconectado';
-    };
+        evtSource.onmessage = function(event) {
+            const pedidos = JSON.parse(event.data);
+            renderizarCocina(pedidos);
+        };
 
-    evtSource.onopen = function() {
-        indicador.className = "flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg font-bold animate-pulse";
-        indicador.innerHTML = '<div class="w-3 h-3 bg-green-600 rounded-full"></div> En Vivo';
-    };
+        evtSource.onerror = function() {
+            console.error("Error en conexión SSE");
+            indicador.className = "flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg font-bold";
+            indicador.innerHTML = '<div class="w-3 h-3 bg-red-600 rounded-full"></div> Desconectado';
+        };
 
+        evtSource.onopen = function() {
+            indicador.className = "flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg font-bold animate-pulse";
+            indicador.innerHTML = '<div class="w-3 h-3 bg-green-600 rounded-full"></div> En Vivo';
+        };
+    }
+
+    // --- 3. RENDERIZADO Y DETECCIÓN DE NUEVOS ---
     function renderizarCocina(lista) {
-        // No borramos todo el HTML de golpe para no perder interacciones si el usuario está a punto de clickear
-        // Pero para simplificar y asegurar orden, redibujamos y mantenemos IDs para animaciones
-        
+        // Limpiamos contenedor (o usamos lógica de diff si prefieres mantener estado de botones)
+        // Para asegurar orden correcto visual, reconstruimos:
         contenedor.innerHTML = '';
+        
         const pedidosActuales = new Set();
+        let hayNuevosReales = false;
 
         if (lista.length === 0) {
             contenedor.innerHTML = `
@@ -38,14 +67,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     <p class="text-4xl font-bold">¡Todo listo en cocina!</p>
                     <p class="text-xl mt-2">No hay pedidos pendientes de guarnición.</p>
                 </div>`;
+            // Si no hay pedidos, reseteamos el set previo para que el próximo cuente como nuevo
+            pedidosPrevios.clear();
             return;
         }
 
         lista.forEach(p => {
             pedidosActuales.add(p.id_pedido);
             
-            // Animación de entrada para nuevos
+            // DETECCIÓN DE NUEVO PEDIDO
+            // Es nuevo si NO estaba en la lista anterior Y la lista anterior ya tenía datos cargados
+            // (Evitamos que suene al recargar la página con F5)
             const esNuevo = !pedidosPrevios.has(p.id_pedido) && pedidosPrevios.size > 0;
+            
+            if (esNuevo) {
+                hayNuevosReales = true;
+            }
+
             const animacionClase = esNuevo ? 'animate-bounce-in' : '';
 
             // Formato de Fecha y Hora
@@ -82,9 +120,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
             }
 
-            // --- TARJETA ---
+            // HTML Tarjeta
             const card = document.createElement('div');
-            // Agregamos un ID único al elemento DOM para poder borrarlo individualmente
             card.id = `pedido-card-${p.id_pedido}`;
             card.className = `bg-white rounded-2xl shadow-xl border-2 border-gray-200 overflow-hidden transform transition hover:scale-[1.01] flex flex-col justify-between ${animacionClase}`;
             
@@ -126,15 +163,21 @@ document.addEventListener('DOMContentLoaded', function() {
             contenedor.appendChild(card);
         });
 
+        // REPRODUCIR SONIDO SI HAY NUEVOS
+        if (hayNuevosReales && audioHabilitado) {
+            audio.currentTime = 0;
+            audio.play().catch(e => console.log("Navegador bloqueó audio:", e));
+        }
+
+        // Actualizar referencia para la siguiente comparación
         pedidosPrevios = pedidosActuales;
     }
 });
 
-// --- FUNCIÓN GLOBAL PARA MARCAR COMO LISTO ---
+// --- FUNCIÓN GLOBAL MARCAR LISTO ---
 function marcarListo(idPedido) {
     if(!confirm('¿Confirmar que este pedido está completamente cocinado?')) return;
 
-    // Efecto visual inmediato (Optimistic UI)
     const card = document.getElementById(`pedido-card-${idPedido}`);
     if(card) {
         card.style.transition = "all 0.5s ease";
@@ -151,17 +194,14 @@ function marcarListo(idPedido) {
         .then(res => res.json())
         .then(data => {
             if (!data.success) {
-                // Si falla, recargar para mostrar de nuevo (rollback visual básico)
-                alert("Error al guardar: " + data.message);
+                alert("Error: " + data.message);
                 location.reload();
             }
-            // Si funciona, el SSE actualizará la lista en el siguiente ciclo (3 segundos),
-            // pero como ya lo borramos visualmente, el usuario no nota el delay.
         })
         .catch(err => console.error("Error:", err));
 }
 
-// Estilos CSS
+// Estilos
 const style = document.createElement('style');
 style.textContent = `
     @keyframes bounceIn {
