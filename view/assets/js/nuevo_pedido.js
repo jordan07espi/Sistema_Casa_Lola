@@ -1,7 +1,7 @@
 /**
  * Archivo: view/assets/js/nuevo_pedido.js
  * Descripción: Lógica completa para gestión de pedidos, asignación de tillos y cliente rápido.
- * Actualizado: Auto-selección de cliente recién creado y eliminación de campo Cédula.
+ * Actualizado: Validación duplicados, mayúsculas automáticas y Tillos más grandes.
  */
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -25,9 +25,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnCerrarModal = document.getElementById('closeModal');
     const btnCancelarModal = document.getElementById('btnCancelar');
     const formQuick = document.getElementById('clienteFormQuick');
+    
+    // NUEVO: Referencia al input de Nombre para mayúsculas
+    const inpNombreQuick = document.getElementById('nombreQuick');
 
     // ==========================================
-    // 2. GESTIÓN DE TILLOS (ETIQUETAS)
+    // 2. GESTIÓN DE TILLOS (ETIQUETAS) - LETRA GRANDE
     // ==========================================
 
     // Escuchar cambios en inputs de cantidad
@@ -63,31 +66,34 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Crear contenedor del grupo
                 const grupo = document.createElement('div');
-                grupo.className = "mb-3 pb-2 border-b border-gray-200 last:border-0 animate-fade-in";
+                grupo.className = "mb-4 pb-4 border-b border-gray-200 last:border-0 animate-fade-in";
+                
+                // CAMBIO VISUAL: Títulos más grandes
                 grupo.innerHTML = `
-                    <h4 class="text-xs font-bold text-orange-700 uppercase mb-2 flex items-center gap-2">
+                    <h4 class="text-sm font-bold text-orange-700 uppercase mb-3 flex items-center gap-2">
                         <i class="fas fa-utensils"></i> ${nombreProd} (${cantidad})
                     </h4>`;
                 
                 for (let i = 1; i <= cantidad; i++) {
                     const divInput = document.createElement('div');
-                    divInput.className = "flex items-center gap-2 mb-2";
+                    divInput.className = "flex items-center gap-3 mb-3";
                     
                     // Restaurar valor previo o usar prefijo por defecto
                     const key = `${idProd}_${i}`;
                     const valorInicial = valoresPrevios[key] || PREFIJO_GLOBAL;
 
+                    // CAMBIO VISUAL: Inputs más grandes (text-xl, py-2) y etiquetas más visibles
                     divInput.innerHTML = `
-                        <span class="text-xs text-gray-500 w-6 font-mono">#${i}</span>
+                        <span class="text-sm text-gray-500 w-6 font-mono font-bold">#${i}</span>
                         <div class="relative flex-1">
                             <input type="text" name="tillos_asignados[${idProd}][]" 
-                                class="input-tillo-dinamico w-full border-gray-300 rounded focus:ring-orange-500 focus:border-orange-500 px-2 py-1 text-sm font-mono font-bold uppercase transition-colors"
+                                class="input-tillo-dinamico w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 px-3 py-2 text-xl font-mono font-bold uppercase transition-colors shadow-sm"
                                 value="${valorInicial}"
                                 data-prefix="${PREFIJO_GLOBAL}"
                                 data-id-prod="${idProd}"
                                 data-index="${i}"
                                 required>
-                            <div class="status-icon absolute right-2 top-1 text-xs"></div>
+                            <div class="status-icon absolute right-3 top-3 text-sm"></div>
                         </div>
                     `;
                     grupo.appendChild(divInput);
@@ -255,6 +261,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if(btnCerrarModal) btnCerrarModal.addEventListener('click', cerrarModal);
     if(btnCancelarModal) btnCancelarModal.addEventListener('click', cerrarModal);
 
+    // NUEVO: FORZAR MAYÚSCULAS EN NOMBRE
+    if(inpNombreQuick) {
+        inpNombreQuick.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+    }
+
     // Envío Formulario Cliente Rápido
     if(formQuick) {
         const inpTel = document.getElementById('telefonoQuick');
@@ -286,7 +299,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         cerrarModal();
                         
                         // 2. Obtener datos devueltos por el backend
-                        // (El backend debe devolver data.nuevo_cliente con {id, nombre, telefono})
                         if(data.nuevo_cliente) {
                             const nuevo = data.nuevo_cliente;
                             const textoVisual = `${nuevo.telefono} | ${nuevo.nombre}`;
@@ -304,11 +316,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             // 5. Feedback visual de éxito
                             inpClienteBusqueda.classList.add('border-green-500', 'bg-green-50');
                         } else {
-                            // Fallback si el backend no devuelve los datos (por si acaso)
+                            // Fallback
                             alert('Cliente registrado. Por favor búsquelo en la lista.');
                         }
 
                     } else {
+                        // AQUÍ SE MUESTRA EL MENSAJE DE DUPLICADO
                         alert(data.message);
                     }
                 })

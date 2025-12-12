@@ -107,5 +107,15 @@ class ClienteDAO {
         $stmt->execute();
         return $stmt->fetchColumn() > 0;
     }
+    
+    // --- NUEVO MÉTODO PARA VALIDAR NOMBRE Y TELÉFONO ---
+    public function existeClienteRapido($nombre, $telefono) {
+        $sql = "SELECT COUNT(*) FROM clientes WHERE nombre = :nombre AND telefono = :telefono AND activo = 1";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bindValue(':nombre', $nombre);
+        $stmt->bindValue(':telefono', $telefono);
+        $stmt->execute();
+        return $stmt->fetchColumn() > 0;
+    }
 }
 ?>
