@@ -1,0 +1,21 @@
+{
+  "name": "Sistema Casa Lola",
+  "short_name": "Casa Lola",
+  "start_url": "./login.php",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ea580c",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "view/assets/img/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "view/assets/img/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
