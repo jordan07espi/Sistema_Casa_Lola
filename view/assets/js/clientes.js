@@ -1,7 +1,7 @@
 /**
  * Archivo: view/assets/js/clientes.js
- * Descripción: Gestión completa de clientes con validaciones (Ecuador),
- * paginación, búsqueda en servidor, modal y soporte para Email.
+ * Descripción: Gestión de clientes simplificada (Solo Nombre y Teléfono).
+ * Actualizado: Eliminación de Cédula y Email, validación de duplicados por combinación.
  */
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -14,13 +14,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const txtTotal = document.getElementById('txtTotal');
 
     // Inputs del formulario
-    const inpCedula = document.getElementById('cedula');
     const inpNombre = document.getElementById('nombre');
-    const inpEmail = document.getElementById('email'); // <--- NUEVA REFERENCIA
     const inpTelefono = document.getElementById('telefono');
     
     // Contenedores de error
-    const errorCedula = document.getElementById('errorCedula');
     const errorTelefono = document.getElementById('errorTelefono');
 
     // Botones del Modal
@@ -31,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- 2. VARIABLES DE ESTADO ---
     let paginaActual = 1;
     let busquedaActual = '';
-    let timeoutBusqueda; // Para el debounce del buscador
+    let timeoutBusqueda; 
 
     // --- 3. FUNCIONES DE UI Y VALIDACIÓN VISUAL ---
 
@@ -48,30 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
         input.classList.add('border-gray-300', 'focus:ring-orange-500');
     }
 
-    // --- 4. ALGORITMOS DE VALIDACIÓN (ECUADOR) ---
-
-    function validarCedulaEcuador(cedula) {
-        if (cedula.length !== 10) return "Debe tener 10 dígitos.";
-        
-        const digitoRegion = parseInt(cedula.substring(0, 2));
-        if (digitoRegion < 1 || digitoRegion > 24) return "Código de provincia inválido.";
-        
-        const tercerDigito = parseInt(cedula.substring(2, 3));
-        if (tercerDigito >= 6) return "Tercer dígito inválido (Solo Personas Naturales).";
-
-        const coeficientes = [2, 1, 2, 1, 2, 1, 2, 1, 2];
-        const verificador = parseInt(cedula.substring(9, 10));
-        let suma = 0;
-
-        for (let i = 0; i < 9; i++) {
-            let valor = parseInt(cedula.substring(i, i + 1)) * coeficientes[i];
-            if (valor >= 10) valor -= 9;
-            suma += valor;
-        }
-
-        const digitoCalculado = (suma % 10 === 0) ? 0 : 10 - (suma % 10);
-        return (digitoCalculado === verificador) ? true : "Cédula inválida (Dígito verificador incorrecto).";
-    }
+    // --- 4. ALGORITMOS DE VALIDACIÓN ---
 
     function validarTelefonoEcuador(telefono) {
         if (telefono.length !== 10) return "Debe tener 10 dígitos.";
@@ -81,14 +55,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- 5. LOGICA DE PAGINACIÓN Y CARGA ---
 
-    cargarClientes(); // Carga inicial
+    cargarClientes(); 
 
     function cargarClientes(pagina = 1) {
         paginaActual = pagina;
         const url = `../../controller/ClienteController.php?action=listar&pagina=${pagina}&busqueda=${encodeURIComponent(busquedaActual)}`;
         
-        // Efecto de carga
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">Cargando...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-gray-500">Cargando...</td></tr>`;
 
         fetch(url)
             .then(res => res.json())
@@ -97,45 +70,37 @@ document.addEventListener('DOMContentLoaded', function() {
                     renderizarTabla(data.data);
                     renderizarPaginacion(data.pagination);
                 } else {
-                    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-red-500">${data.message}</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-red-500">${data.message}</td></tr>`;
                 }
             })
             .catch(err => {
                 console.error(err);
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-red-500">Error de conexión.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-red-500">Error de conexión.</td></tr>`;
             });
     }
 
     function renderizarTabla(lista) {
         tbody.innerHTML = '';
         if (!lista || lista.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">No se encontraron resultados.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-gray-500">No se encontraron resultados.</td></tr>`;
             return;
         }
 
         lista.forEach(c => {
             // Diseño Responsivo: Card en Móvil / Tabla en Desktop
-            // NOTA: Se ha agregado una fila visual para el Email si lo deseas mostrar, 
-            // aunque en móvil podría ocupar espacio, aquí lo dejo disponible.
             tbody.innerHTML += `
                 <tr class="bg-white border md:border-b border-gray-200 block md:table-row rounded-xl shadow-sm md:shadow-none mb-4 md:mb-0 hover:bg-orange-50 transition">
                     
-                    <td class="p-4 md:py-3 md:px-6 block md:table-cell border-b md:border-none bg-gray-50 md:bg-transparent">
-                        <span class="md:hidden text-xs font-bold text-gray-400 uppercase mb-1 block">Cédula</span>
-                        <span class="font-mono font-bold text-gray-900">${sanitizeHTML(c.cedula)}</span>
-                    </td>
-
                     <td class="p-4 md:py-3 md:px-6 block md:table-cell border-b md:border-none">
                         <span class="md:hidden text-xs font-bold text-gray-400 uppercase mb-1 block">Cliente</span>
                         <div class="flex flex-col">
-                            <span class="font-medium text-gray-800 uppercase">${sanitizeHTML(c.nombre)}</span>
-                            ${c.email ? `<span class="text-xs text-gray-400 lowercase">${sanitizeHTML(c.email)}</span>` : ''}
+                            <span class="font-bold text-gray-800 uppercase text-lg md:text-base">${sanitizeHTML(c.nombre)}</span>
                         </div>
                     </td>
 
                     <td class="p-4 md:py-3 md:px-6 block md:table-cell border-b md:border-none">
                         <span class="md:hidden text-xs font-bold text-gray-400 uppercase mb-1 block">Teléfono</span>
-                        <span class="text-gray-600"><i class="fas fa-phone-alt text-orange-400 mr-2"></i>${sanitizeHTML(c.telefono)}</span>
+                        <span class="text-gray-600 font-mono font-medium"><i class="fas fa-phone-alt text-orange-400 mr-2"></i>${sanitizeHTML(c.telefono)}</span>
                     </td>
 
                     <td class="p-4 md:py-3 md:px-6 block md:table-cell text-center">
@@ -195,24 +160,6 @@ document.addEventListener('DOMContentLoaded', function() {
         this.value = this.value.toUpperCase();
     });
 
-    // Cédula: Validación dinámica
-    inpCedula.addEventListener('input', function() {
-        this.value = this.value.replace(/[^0-9]/g, ''); // Solo números
-        if (!errorCedula.classList.contains('hidden')) {
-            limpiarError(inpCedula, errorCedula);
-        }
-    });
-
-    inpCedula.addEventListener('blur', function() {
-        if (this.value === "") return;
-        const resultado = validarCedulaEcuador(this.value);
-        if (resultado !== true) {
-            mostrarError(inpCedula, errorCedula, resultado);
-        } else {
-            limpiarError(inpCedula, errorCedula);
-        }
-    });
-
     // Teléfono: Validación dinámica
     inpTelefono.addEventListener('input', function() {
         this.value = this.value.replace(/[^0-9]/g, '');
@@ -245,24 +192,20 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         
         // Validación final antes de enviar
-        const resCedula = validarCedulaEcuador(inpCedula.value);
         const resTelefono = validarTelefonoEcuador(inpTelefono.value);
-
         let hayErrores = false;
 
-        if (resCedula !== true) {
-            mostrarError(inpCedula, errorCedula, resCedula);
-            hayErrores = true;
-        }
         if (resTelefono !== true) {
             mostrarError(inpTelefono, errorTelefono, resTelefono);
             hayErrores = true;
         }
 
-        if (hayErrores) return; // Detener si hay errores
+        if (hayErrores) return;
 
         const formData = new FormData(form);
         if (!formData.get('action')) formData.set('action', 'agregar');
+
+        // Importante: No enviamos cédula ni email, el controlador los recibirá como null
 
         fetch('../../controller/ClienteController.php', { method: 'POST', body: formData })
             .then(res => res.json())
@@ -270,13 +213,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     cerrarModal();
                     cargarClientes(1);
-                    // Opcional: Mostrar Toast/Alerta de éxito
+                    // Opcional: Alerta de éxito suave
                 } else {
-                    if (data.message.toLowerCase().includes('cédula')) {
-                         mostrarError(inpCedula, errorCedula, data.message);
-                    } else {
-                         alert(data.message);
-                    }
+                    alert(data.message); // Mostrará mensaje de duplicado si aplica
                 }
             })
             .catch(err => alert("Error al procesar la solicitud."));
@@ -289,18 +228,9 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('action').value = 'actualizar';
         document.getElementById('id_cliente').value = cliente.id_cliente;
         
-        inpCedula.value = cliente.cedula;
         inpNombre.value = cliente.nombre;
-        
-        // --- CAMBIO: Cargar el email si existe ---
-        if(inpEmail) {
-            inpEmail.value = cliente.email || ''; 
-        }
-
         inpTelefono.value = cliente.telefono;
         
-        // Limpiar errores previos
-        limpiarError(inpCedula, errorCedula);
         limpiarError(inpTelefono, errorTelefono);
         
         modal.classList.remove('hidden');
@@ -326,11 +256,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function abrirModal() {
         form.reset();
-        limpiarError(inpCedula, errorCedula);
         limpiarError(inpTelefono, errorTelefono);
-        
-        // --- CAMBIO: Limpiar explícitamente el email ---
-        if(inpEmail) inpEmail.value = '';
 
         document.getElementById('modalTitle').textContent = 'Nuevo Cliente';
         document.getElementById('action').value = 'agregar';
@@ -343,7 +269,6 @@ document.addEventListener('DOMContentLoaded', function() {
         modal.classList.add('hidden');
     }
 
-    // Listeners del modal
     if(btnNuevo) btnNuevo.addEventListener('click', abrirModal);
     if(btnCerrar) btnCerrar.addEventListener('click', cerrarModal);
     if(btnCancelar) btnCancelar.addEventListener('click', cerrarModal);
