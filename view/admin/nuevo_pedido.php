@@ -54,7 +54,7 @@ $prefijoTillo = date('Y') . '_';
             
             <datalist id="listaClientes">
                 <?php foreach ($clientes as $c): ?>
-                    <option data-id="<?php echo $c['id_cliente']; ?>" value="<?php echo $c['cedula'] . ' | ' . $c['nombre']; ?>">
+                    <option data-id="<?php echo $c['id_cliente']; ?>" value="<?php echo $c['telefono'] . ' | ' . $c['nombre']; ?>">
                 <?php endforeach; ?>
             </datalist>
             <p id="msgCliente" class="text-xs text-red-500 mt-1 hidden">Por favor seleccione un cliente de la lista.</p>
@@ -180,24 +180,18 @@ $prefijoTillo = date('Y') . '_';
         </div>
         <form id="clienteFormQuick" class="p-6">
             <input type="hidden" name="action" value="agregar">
-            <div class="mb-4">
-                <label class="block text-gray-700 font-medium mb-2">Cédula</label>
-                <input type="text" name="cedula" id="cedulaQuick" class="w-full border-gray-300 rounded-lg px-4 py-2 border transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500" maxlength="10" required>
-                <p id="errorCedulaQuick" class="text-red-500 text-xs mt-1 hidden font-semibold"></p>
-            </div>
+            
             <div class="mb-4">
                 <label class="block text-gray-700 font-medium mb-2">Nombre</label>
                 <input type="text" name="nombre" id="nombreQuick" class="w-full border-gray-300 rounded-lg px-4 py-2 border focus:outline-none focus:ring-2 focus:ring-orange-500" required>
             </div>
-            <div class="mb-4">
-                <label class="block text-gray-700 font-medium mb-2">Email (Opcional)</label>
-                <input type="email" name="email" id="emailQuick" class="w-full border-gray-300 rounded-lg px-4 py-2 border focus:outline-none focus:ring-2 focus:ring-orange-500">
-            </div>
+
             <div class="mb-6">
                 <label class="block text-gray-700 font-medium mb-2">Teléfono</label>
                 <input type="text" name="telefono" id="telefonoQuick" class="w-full border-gray-300 rounded-lg px-4 py-2 border transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500" maxlength="10" required>
                 <p id="errorTelefonoQuick" class="text-red-500 text-xs mt-1 hidden font-semibold"></p>
             </div>
+
             <div class="flex justify-end gap-3">
                 <button type="button" id="btnCancelar" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg">Cancelar</button>
                 <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition shadow">Guardar</button>

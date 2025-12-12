@@ -15,12 +15,10 @@ class ClienteDAO {
     public function listar($inicio, $limite, $busqueda = '') {
         $sql = "SELECT * FROM clientes WHERE activo = 1";
         
-        // Si hay búsqueda, agregamos filtros
         if (!empty($busqueda)) {
             $sql .= " AND (nombre LIKE :busqueda OR cedula LIKE :busqueda)";
         }
 
-        // Ordenamos por ID descendente para ver los nuevos primero
         $sql .= " ORDER BY id_cliente DESC LIMIT :inicio, :limite";
         
         $stmt = $this->conexion->prepare($sql);
@@ -36,7 +34,7 @@ class ClienteDAO {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // CONTAR TOTAL DE REGISTROS (Para saber cuántas páginas hay)
+    // CONTAR TOTAL DE REGISTROS
     public function contarTotal($busqueda = '') {
         $sql = "SELECT COUNT(*) FROM clientes WHERE activo = 1";
         
@@ -55,28 +53,31 @@ class ClienteDAO {
         return $stmt->fetchColumn();
     }
 
-
-    // Buscar el método agregar y cambiar por:
+    // AGREGAR (CORREGIDO: Devuelve el ID insertado)
     public function agregar(Cliente $cliente) {
-        if ($this->existeCedula($cliente->cedula)) return false; 
-        // Agregamos :email
+        // Solo validamos cédula si NO es nula
+        if ($cliente->cedula && $this->existeCedula($cliente->cedula)) return false; 
+        
         $sql = "INSERT INTO clientes (cedula, nombre, email, telefono) VALUES (:cedula, :nombre, :email, :telefono)";
         $stmt = $this->conexion->prepare($sql);
         $stmt->bindValue(':cedula', $cliente->cedula);
         $stmt->bindValue(':nombre', $cliente->nombre);
-        $stmt->bindValue(':email', $cliente->email); // <--- NUEVO
+        $stmt->bindValue(':email', $cliente->email);
         $stmt->bindValue(':telefono', $cliente->telefono);
-        return $stmt->execute();
+        
+        if ($stmt->execute()) {
+            return $this->conexion->lastInsertId(); // Devolvemos el ID del nuevo cliente
+        }
+        return false;
     }
 
-    // Buscar el método actualizar y cambiar por:
+    // ACTUALIZAR
     public function actualizar(Cliente $cliente) {
-        // Agregamos :email
         $sql = "UPDATE clientes SET nombre = :nombre, cedula = :cedula, email = :email, telefono = :telefono WHERE id_cliente = :id";
         $stmt = $this->conexion->prepare($sql);
         $stmt->bindValue(':nombre', $cliente->nombre);
         $stmt->bindValue(':cedula', $cliente->cedula);
-        $stmt->bindValue(':email', $cliente->email); // <--- NUEVO
+        $stmt->bindValue(':email', $cliente->email);
         $stmt->bindValue(':telefono', $cliente->telefono);
         $stmt->bindValue(':id', $cliente->id_cliente);
         return $stmt->execute();

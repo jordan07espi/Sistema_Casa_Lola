@@ -1,7 +1,7 @@
 /**
  * Archivo: view/assets/js/nuevo_pedido.js
- * Descripción: Lógica completa para gestión de pedidos, validaciones y facturación/impresión.
- * Actualizado: Manejo robusto de errores de servidor y flujo de impresión.
+ * Descripción: Lógica completa para gestión de pedidos, asignación de tillos y cliente rápido.
+ * Actualizado: Auto-selección de cliente recién creado y eliminación de campo Cédula.
  */
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -224,24 +224,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // 4. MODAL CLIENTE RÁPIDO Y VALIDACIONES
     // ==========================================
 
-    // Validadores Reglas Ecuador
-    function validarCedulaEcuador(cedula) {
-        if (cedula.length !== 10) return "Debe tener 10 dígitos.";
-        const digitoRegion = parseInt(cedula.substring(0, 2));
-        if (digitoRegion < 1 || digitoRegion > 24) return "Provincia inválida.";
-        const tercerDigito = parseInt(cedula.substring(2, 3));
-        if (tercerDigito >= 6) return "Solo personas naturales.";
-        
-        const coef = [2, 1, 2, 1, 2, 1, 2, 1, 2];
-        let suma = 0;
-        for (let i = 0; i < 9; i++) {
-            let val = parseInt(cedula[i]) * coef[i];
-            suma += (val >= 10) ? val - 9 : val;
-        }
-        const digitoCalc = (suma % 10 === 0) ? 0 : 10 - (suma % 10);
-        return (digitoCalc === parseInt(cedula[9])) ? true : "Cédula inválida.";
-    }
-
     function validarTelefonoEcuador(telefono) {
         if (telefono.length !== 10) return "Debe tener 10 dígitos.";
         if (!telefono.startsWith('09')) return "Debe empezar con '09'.";
@@ -264,7 +246,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Control del Modal
     function abrirModal() { 
         formQuick.reset(); 
-        limpiarError(document.getElementById('cedulaQuick'), 'errorCedulaQuick');
         limpiarError(document.getElementById('telefonoQuick'), 'errorTelefonoQuick');
         modalCliente.classList.remove('hidden'); 
     }
@@ -276,16 +257,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Envío Formulario Cliente Rápido
     if(formQuick) {
-        const inpCed = document.getElementById('cedulaQuick');
         const inpTel = document.getElementById('telefonoQuick');
-        
-        // Validaciones en tiempo real
-        inpCed.addEventListener('blur', function() {
-            if(this.value) {
-                const res = validarCedulaEcuador(this.value);
-                res === true ? limpiarError(this, 'errorCedulaQuick') : mostrarError(this, 'errorCedulaQuick', res);
-            }
-        });
+
         inpTel.addEventListener('blur', function() {
             if(this.value) {
                 const res = validarTelefonoEcuador(this.value);
@@ -296,22 +269,52 @@ document.addEventListener('DOMContentLoaded', function() {
         formQuick.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const resCed = validarCedulaEcuador(inpCed.value);
+            // Validar teléfono solamente (Cédula eliminada)
             const resTel = validarTelefonoEcuador(inpTel.value);
 
-            if (resCed !== true) { mostrarError(inpCed, 'errorCedulaQuick', resCed); return; }
             if (resTel !== true) { mostrarError(inpTel, 'errorTelefonoQuick', resTel); return; }
 
             const formData = new FormData(formQuick);
+            
             fetch('../../controller/ClienteController.php', { method: 'POST', body: formData })
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
-                        alert('Cliente registrado.');
-                        location.reload(); 
+                        // === AUTO SELECCIÓN DEL CLIENTE NUEVO ===
+                        
+                        // 1. Cerrar Modal
+                        cerrarModal();
+                        
+                        // 2. Obtener datos devueltos por el backend
+                        // (El backend debe devolver data.nuevo_cliente con {id, nombre, telefono})
+                        if(data.nuevo_cliente) {
+                            const nuevo = data.nuevo_cliente;
+                            const textoVisual = `${nuevo.telefono} | ${nuevo.nombre}`;
+
+                            // 3. Crear dinámicamente la opción en el Datalist
+                            const opcion = document.createElement('option');
+                            opcion.setAttribute('data-id', nuevo.id);
+                            opcion.value = textoVisual;
+                            listaClientes.appendChild(opcion);
+
+                            // 4. Asignar valores al buscador principal
+                            inpClienteBusqueda.value = textoVisual;
+                            inpIdCliente.value = nuevo.id;
+
+                            // 5. Feedback visual de éxito
+                            inpClienteBusqueda.classList.add('border-green-500', 'bg-green-50');
+                        } else {
+                            // Fallback si el backend no devuelve los datos (por si acaso)
+                            alert('Cliente registrado. Por favor búsquelo en la lista.');
+                        }
+
                     } else {
                         alert(data.message);
                     }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Error al procesar el cliente.");
                 });
         });
     }
@@ -355,32 +358,27 @@ document.addEventListener('DOMContentLoaded', function() {
         // D. Petición Robusta (Texto -> JSON)
         fetch('../../controller/PedidoController.php', { method: 'POST', body: formData })
             .then(res => {
-                // 1. Verificar nivel de red HTTP
                 if (!res.ok) throw new Error(`Error de Red: ${res.status} ${res.statusText}`);
-                return res.text(); // 2. Obtener texto crudo para inspeccionar
+                return res.text(); 
             })
             .then(texto => {
                 try {
-                    return JSON.parse(texto); // 3. Intentar parsear JSON
+                    return JSON.parse(texto);
                 } catch (error) {
-                    // Si falla el parseo, es probable que PHP haya lanzado un Fatal Error
                     console.error("Respuesta inválida del servidor:", texto);
                     throw new Error("Error interno del servidor (PHP). Revise la consola para más detalles.");
                 }
             })
             .then(data => {
-                // 4. Lógica de negocio
                 if (data.success) {
                     // Preguntar por impresión
                     if (confirm('✅ ¡Pedido registrado correctamente!\n\n¿Desea imprimir el comprobante ahora?')) {
                         const idPedido = data.id_pedido;
                         if(idPedido) {
-                            // Abrir ticket en popup
                             window.open(`ticket.php?id=${idPedido}`, 'ImprimirTicket', 'width=400,height=600,scrollbars=yes');
                         }
                     }
                     
-                    // Redirigir siempre
                     setTimeout(() => {
                         window.location.href = 'pedidos.php';
                     }, 500);

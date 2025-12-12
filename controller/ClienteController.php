@@ -5,19 +5,19 @@ require_once '../model/dto/Cliente.php';
 
 header('Content-Type: application/json');
 
-$response = ['success' => false, 'message' => 'Acción no válida.'];
+// Evitar errores de offset si no vienen parámetros
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
+$response = ['success' => false, 'message' => 'Acción no válida.'];
 
 $clienteDAO = new ClienteDAO();
 
-// Función auxiliar para validar cédula en el servidor (Seguridad extra)
+// Función auxiliar para validar cédula (solo si existe)
 function validarCedulaPHP($cedula) {
+    if (!$cedula) return true; // Si es null o vacío, es válido
     if (strlen($cedula) !== 10) return false;
     $digitoRegion = substr($cedula, 0, 2);
     if ($digitoRegion < 1 || $digitoRegion > 24) return false;
-    $tercerDigito = substr($cedula, 2, 1);
-    if ($tercerDigito >= 6) return false;
-    // Algoritmo simplificado de validación de checksum
+    // Algoritmo simplificado
     $coef = [2, 1, 2, 1, 2, 1, 2, 1, 2];
     $suma = 0;
     for ($i = 0; $i < 9; $i++) {
@@ -29,13 +29,11 @@ function validarCedulaPHP($cedula) {
 }
 
 try {
-switch ($action) {
+    switch ($action) {
         case 'listar':
-            // Recibir página y búsqueda
             $pagina = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
             $busqueda = isset($_GET['busqueda']) ? trim($_GET['busqueda']) : '';
-            $limite = 20; // Cantidad de clientes por página
-            
+            $limite = 20;
             $inicio = ($pagina - 1) * $limite;
 
             $lista = $clienteDAO->listar($inicio, $limite, $busqueda);
@@ -52,31 +50,33 @@ switch ($action) {
             break;
 
         case 'agregar':
-            $cedula = trim($_POST['cedula']);
+            // 1. Recibir datos (Cédula y Email ahora son opcionales/nulos)
+            $cedula = isset($_POST['cedula']) ? trim($_POST['cedula']) : null;
+            if ($cedula === '') $cedula = null; 
             
-            // 1. Validaciones de formato Servidor
-            if (!validarCedulaPHP($cedula)) {
-                $response['message'] = 'La cédula ingresada no es válida.';
-                break;
-            }
-            
-            // 2. Validación de duplicados (DAO)
-            if ($clienteDAO->existeCedula($cedula)) {
-                $response['message'] = 'Ya existe un cliente registrado con esta cédula.';
-                break;
-            }
-
+            // 2. Crear Objeto Cliente
             $cliente = new Cliente();
             $cliente->cedula = $cedula;
-            $cliente->nombre = mb_strtoupper(trim($_POST['nombre']), 'UTF-8'); // Mayúsculas servidor
+            $cliente->nombre = mb_strtoupper(trim($_POST['nombre'] ?? ''), 'UTF-8');
             $cliente->email = trim($_POST['email'] ?? '');
-            $cliente->telefono = trim($_POST['telefono']);
+            if ($cliente->email === '') $cliente->email = null;
+            $cliente->telefono = trim($_POST['telefono'] ?? '');
 
-            if ($clienteDAO->agregar($cliente)) {
+            // 3. Guardar y capturar ID
+            $resultado = $clienteDAO->agregar($cliente);
+
+            if ($resultado) {
                 $response['success'] = true;
                 $response['message'] = 'Cliente registrado correctamente.';
+                
+                // DEVOLVER DATOS AL JS PARA AUTO-SELECCIÓN
+                $response['nuevo_cliente'] = [
+                    'id' => $resultado, 
+                    'nombre' => $cliente->nombre,
+                    'telefono' => $cliente->telefono
+                ];
             } else {
-                $response['message'] = 'Error técnico al guardar el cliente.';
+                $response['message'] = 'Error técnico al guardar el cliente (posible cédula duplicada).';
             }
             break;
 
@@ -93,16 +93,17 @@ switch ($action) {
 
         case 'actualizar':
             $id = $_POST['id_cliente'];
-            $cedula = trim($_POST['cedula']);
+            $cedula = trim($_POST['cedula'] ?? '');
+            if ($cedula === '') $cedula = null;
 
-            // Validar formato
-            if (!validarCedulaPHP($cedula)) {
+            // Validar formato solo si hay cédula
+            if ($cedula && !validarCedulaPHP($cedula)) {
                 $response['message'] = 'La cédula ingresada no es válida.';
                 break;
             }
 
-            // Validar duplicado excluyendo el ID actual
-            if ($clienteDAO->existeCedula($cedula, $id)) {
+            // Validar duplicado
+            if ($cedula && $clienteDAO->existeCedula($cedula, $id)) {
                 $response['message'] = 'Esa cédula ya pertenece a otro cliente.';
                 break;
             }
@@ -110,9 +111,10 @@ switch ($action) {
             $cliente = new Cliente();
             $cliente->id_cliente = $id;
             $cliente->cedula = $cedula;
-            $cliente->nombre = mb_strtoupper(trim($_POST['nombre']), 'UTF-8');
+            $cliente->nombre = mb_strtoupper(trim($_POST['nombre'] ?? ''), 'UTF-8');
             $cliente->email = trim($_POST['email'] ?? '');
-            $cliente->telefono = trim($_POST['telefono']);
+            if ($cliente->email === '') $cliente->email = null;
+            $cliente->telefono = trim($_POST['telefono'] ?? '');
 
             if ($clienteDAO->actualizar($cliente)) {
                 $response['success'] = true;
