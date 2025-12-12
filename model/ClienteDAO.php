@@ -12,14 +12,17 @@ class ClienteDAO {
     }
 
     // LISTAR CON PAGINACIÓN Y BÚSQUEDA
+    // 1. MODIFICAR: Quitamos "WHERE activo = 1" para que traiga TODOS
     public function listar($inicio, $limite, $busqueda = '') {
-        $sql = "SELECT * FROM clientes WHERE activo = 1";
+        // Seleccionamos todos. Ordenamos por activo DESC (primero los activos) y luego por ID
+        $sql = "SELECT * FROM clientes WHERE 1=1"; 
         
         if (!empty($busqueda)) {
             $sql .= " AND (nombre LIKE :busqueda OR cedula LIKE :busqueda)";
         }
 
-        $sql .= " ORDER BY id_cliente DESC LIMIT :inicio, :limite";
+        // Orden: Primero los activos (1), luego los inactivos (0), luego por fecha
+        $sql .= " ORDER BY activo DESC, id_cliente DESC LIMIT :inicio, :limite";
         
         $stmt = $this->conexion->prepare($sql);
         
@@ -34,9 +37,9 @@ class ClienteDAO {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // CONTAR TOTAL DE REGISTROS
+    // 2. MODIFICAR: También quitamos el filtro aquí para que la paginación cuadre
     public function contarTotal($busqueda = '') {
-        $sql = "SELECT COUNT(*) FROM clientes WHERE activo = 1";
+        $sql = "SELECT COUNT(*) FROM clientes WHERE 1=1";
         
         if (!empty($busqueda)) {
             $sql .= " AND (nombre LIKE :busqueda OR cedula LIKE :busqueda)";
@@ -51,6 +54,16 @@ class ClienteDAO {
 
         $stmt->execute();
         return $stmt->fetchColumn();
+    }
+
+    // ... (Mantén las funciones agregar, actualizar, eliminar, obtenerPorId, existeCedula igual) ...
+
+    // 3. AGREGAR NUEVA FUNCIÓN: Para volver a habilitar al cliente
+    public function activar($id) {
+        $sql = "UPDATE clientes SET activo = 1 WHERE id_cliente = :id";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bindValue(':id', $id);
+        return $stmt->execute();
     }
 
     // AGREGAR (CORREGIDO: Devuelve el ID insertado)

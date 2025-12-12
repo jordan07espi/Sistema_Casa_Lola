@@ -1,7 +1,7 @@
 /**
  * Archivo: view/assets/js/clientes.js
- * Descripción: Gestión de clientes simplificada (Solo Nombre y Teléfono).
- * Actualizado: Eliminación de Cédula y Email, validación de duplicados por combinación.
+ * Descripción: Gestión de clientes (Nombre y Teléfono).
+ * Actualizado: Lógica para listar inactivos y permitir reactivación.
  */
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return true;
     }
 
-    // --- 5. LOGICA DE PAGINACIÓN Y CARGA ---
+    // --- 5. LÓGICA DE PAGINACIÓN Y CARGA ---
 
     cargarClientes(); 
 
@@ -87,14 +87,49 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         lista.forEach(c => {
-            // Diseño Responsivo: Card en Móvil / Tabla en Desktop
+            // Lógica visual para clientes inactivos
+            // Comparamos con 1 (activo) o 0 (inactivo). 
+            // Usamos == para que funcione si viene como string "1" o número 1
+            const esActivo = (c.activo == 1); 
+            
+            // Estilos: Si es inactivo, fondo gris, opacidad y sin efecto hover naranja
+            const rowClass = esActivo 
+                ? 'bg-white hover:bg-orange-50' 
+                : 'bg-gray-100 opacity-75';
+            
+            // Badge visual "INACTIVO" junto al nombre
+            const badgeEstado = esActivo
+                ? ''
+                : '<span class="ml-2 px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-600 border border-red-200">INACTIVO</span>';
+
+            // Botón dinámico: Desactivar (Rojo/Gris) o Reactivar (Verde)
+            let btnAccion = '';
+            
+            if (esActivo) {
+                // Botón para DESACTIVAR
+                btnAccion = `
+                    <button onclick="desactivarCliente(${c.id_cliente})" class="bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-600 px-3 py-2 rounded-lg transition shadow-sm flex items-center gap-2 border border-gray-200" title="Desactivar Cliente">
+                        <i class="fas fa-user-slash"></i> <span class="md:hidden text-sm font-bold">Desactivar</span>
+                    </button>`;
+            } else {
+                // Botón para REACTIVAR
+                btnAccion = `
+                    <button onclick="activarCliente(${c.id_cliente})" class="bg-green-100 text-green-600 hover:bg-green-200 px-3 py-2 rounded-lg transition shadow-sm flex items-center gap-2 border border-green-200" title="Reactivar Cliente">
+                        <i class="fas fa-user-check"></i> <span class="md:hidden text-sm font-bold">Reactivar</span>
+                    </button>`;
+            }
+
+            // Renderizado de la fila
             tbody.innerHTML += `
-                <tr class="bg-white border md:border-b border-gray-200 block md:table-row rounded-xl shadow-sm md:shadow-none mb-4 md:mb-0 hover:bg-orange-50 transition">
+                <tr class="${rowClass} border md:border-b border-gray-200 block md:table-row rounded-xl shadow-sm md:shadow-none mb-4 md:mb-0 transition">
                     
                     <td class="p-4 md:py-3 md:px-6 block md:table-cell border-b md:border-none">
                         <span class="md:hidden text-xs font-bold text-gray-400 uppercase mb-1 block">Cliente</span>
                         <div class="flex flex-col">
-                            <span class="font-bold text-gray-800 uppercase text-lg md:text-base">${sanitizeHTML(c.nombre)}</span>
+                            <span class="font-bold text-gray-800 uppercase text-lg md:text-base">
+                                ${sanitizeHTML(c.nombre)}
+                                ${badgeEstado}
+                            </span>
                         </div>
                     </td>
 
@@ -108,9 +143,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             <button onclick='editarCliente(${JSON.stringify(c)})' class="bg-amber-100 text-amber-600 hover:bg-amber-200 px-3 py-2 rounded-lg transition shadow-sm flex items-center gap-2" title="Editar">
                                 <i class="fas fa-edit"></i> <span class="md:hidden text-sm font-bold">Editar</span>
                             </button>
-                            <button onclick="eliminarCliente(${c.id_cliente})" class="bg-red-100 text-red-600 hover:bg-red-200 px-3 py-2 rounded-lg transition shadow-sm flex items-center gap-2" title="Eliminar">
-                                <i class="fas fa-trash-alt"></i> <span class="md:hidden text-sm font-bold">Eliminar</span>
-                            </button>
+                            
+                            ${btnAccion}
                         </div>
                     </td>
                 </tr>
@@ -205,17 +239,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData(form);
         if (!formData.get('action')) formData.set('action', 'agregar');
 
-        // Importante: No enviamos cédula ni email, el controlador los recibirá como null
-
         fetch('../../controller/ClienteController.php', { method: 'POST', body: formData })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
                     cerrarModal();
-                    cargarClientes(1);
-                    // Opcional: Alerta de éxito suave
+                    cargarClientes(1); // Recarga para ver cambios
                 } else {
-                    alert(data.message); // Mostrará mensaje de duplicado si aplica
+                    alert(data.message);
                 }
             })
             .catch(err => alert("Error al procesar la solicitud."));
@@ -236,10 +267,11 @@ document.addEventListener('DOMContentLoaded', function() {
         modal.classList.remove('hidden');
     };
 
-    window.eliminarCliente = function(id) {
-        if (confirm('¿Estás seguro de eliminar este cliente?')) {
+    // Función para DESACTIVAR (Soft Delete)
+    window.desactivarCliente = function(id) {
+        if (confirm('¿Está seguro de DESACTIVAR este cliente?\n\nNo aparecerá en las búsquedas rápidas, pero su historial se mantendrá.')) {
             const formData = new FormData();
-            formData.append('action', 'eliminar');
+            formData.append('action', 'eliminar'); // El backend lo marca como activo=0
             formData.append('id_cliente', id);
 
             fetch('../../controller/ClienteController.php', { method: 'POST', body: formData })
@@ -250,7 +282,28 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else {
                         alert(data.message);
                     }
-                });
+                })
+                .catch(err => alert("Error de conexión al desactivar."));
+        }
+    };
+
+    // Función para REACTIVAR
+    window.activarCliente = function(id) {
+        if (confirm('¿Desea REACTIVAR este cliente? Volverá a aparecer en las búsquedas de pedidos.')) {
+            const formData = new FormData();
+            formData.append('action', 'activar'); // Requiere soporte en Controller
+            formData.append('id_cliente', id);
+
+            fetch('../../controller/ClienteController.php', { method: 'POST', body: formData })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        cargarClientes(paginaActual); 
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(err => alert("Error de conexión al activar."));
         }
     };
 

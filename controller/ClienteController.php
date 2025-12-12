@@ -98,6 +98,16 @@ try {
                 $response['message'] = 'Cliente no encontrado.';
             }
             break;
+            
+        case 'activar':
+            $id = $_POST['id_cliente'];
+            if ($clienteDAO->activar($id)) {
+                $response['success'] = true;
+                $response['message'] = 'Cliente reactivado correctamente.';
+            } else {
+                $response['message'] = 'Error al reactivar cliente.';
+            }
+            break;
 
         case 'actualizar':
              // ... (Igual que antes) ...
