@@ -180,8 +180,8 @@ class PedidoDAO {
             $codigoPrincipal = !empty($tillosArray) ? $tillosArray[0]['codigo'] : 'S/T-' . time();
             
             // Insertar Cabecera del Pedido
-            $sql = "INSERT INTO pedidos (codigo_pedido, id_cliente, id_usuario, fecha_entrega, hora_entrega, total, observaciones, evidencia_foto, estado) 
-                    VALUES (:codigo, :cliente, :usuario, :fecha, :hora, :total, :obs, :foto, 'Pendiente')";
+            $sql = "INSERT INTO pedidos (codigo_pedido, id_cliente, id_usuario, fecha_entrega, hora_entrega, total, pagado, observaciones, evidencia_foto, estado) 
+                    VALUES (:codigo, :cliente, :usuario, :fecha, :hora, :total, :pagado, :obs, :foto, 'Pendiente')";
             $stmt = $this->conexion->prepare($sql);
             $stmt->bindValue(':codigo', $codigoPrincipal);
             $stmt->bindValue(':cliente', $pedido->id_cliente);
@@ -189,6 +189,7 @@ class PedidoDAO {
             $stmt->bindValue(':fecha', $pedido->fecha_entrega);
             $stmt->bindValue(':hora', $pedido->hora_entrega);
             $stmt->bindValue(':total', $pedido->total);
+            $stmt->bindValue(':pagado', $pedido->pagado);
             $stmt->bindValue(':obs', $pedido->observaciones);
             $stmt->bindValue(':foto', $pedido->evidencia_foto);
             $stmt->execute();
@@ -244,6 +245,16 @@ class PedidoDAO {
             $stmt2->execute();
         }
         
+        return $stmt->execute();
+    }
+
+    // NUEVO MÉTODO PARA PAGOS
+    public function cambiarEstadoPago($id_pedido, $estado_pago) {
+        // estado_pago debe ser 1 (Pagado) o 0 (No Pagado)
+        $sql = "UPDATE pedidos SET pagado = :pagado WHERE id_pedido = :id";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bindValue(':pagado', $estado_pago, PDO::PARAM_INT);
+        $stmt->bindValue(':id', $id_pedido);
         return $stmt->execute();
     }
 }
