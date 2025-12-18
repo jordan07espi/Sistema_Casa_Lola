@@ -21,6 +21,7 @@ foreach ($productos as $prod) {
 }
 
 $clienteDAO = new ClienteDAO();
+// Listamos todos los clientes (ajusta el límite si tienes muchísimos)
 $clientes = $clienteDAO->listar(0, 1000);
 
 $prefijoTillo = date('Y') . '_';
@@ -43,7 +44,7 @@ $prefijoTillo = date('Y') . '_';
             <div class="flex gap-2">
                 <input list="listaClientes" name="cliente_busqueda" id="cliente_busqueda" 
                     class="w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 px-4 py-2 border" 
-                    placeholder="Buscar por nombre o cédula..." autocomplete="off">
+                    placeholder="Buscar por nombre o teléfono..." autocomplete="off">
                 
                 <input type="hidden" name="id_cliente" id="id_cliente_seleccionado" required>
                 
@@ -126,8 +127,14 @@ $prefijoTillo = date('Y') . '_';
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            
             <div>
                 <label class="block text-gray-700 font-bold mb-2">* Precio Total ($)</label>
+                
+                <input type="number" name="precio_total" step="0.01" min="0" 
+                    class="w-full border-gray-300 rounded-lg focus:ring-orange-500 focus:border-orange-500 px-4 py-2 border font-bold text-gray-800" 
+                    placeholder="0.00" required>
+                
                 <div class="mt-3 flex items-center">
                     <input type="checkbox" id="es_pagado" name="es_pagado" value="1" class="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500">
                     <label for="es_pagado" class="ml-2 text-sm font-bold text-gray-700">
