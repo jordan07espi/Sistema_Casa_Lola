@@ -68,6 +68,7 @@ try {
             $pedido->fecha_entrega = $_POST['fecha_entrega'];
             $pedido->hora_entrega = $_POST['hora_entrega'];
             $pedido->total = $_POST['precio_total']; 
+            $pedido->pagado = isset($_POST['es_pagado']) ? 1 : 0;
             $pedido->observaciones = $_POST['observaciones'];
             $pedido->evidencia_foto = $rutaFoto; 
 
@@ -143,6 +144,20 @@ try {
                 $response['message'] = 'Estado actualizado a: ' . $estado;
             } else {
                 $response['message'] = 'No se pudo actualizar el estado.';
+            }
+            break;
+
+        // --- 5. CAMBIAR ESTADO DE PAGO (AJAX) ---
+        case 'cambiar_pago':
+            $id = $_POST['id_pedido'];
+            $pagado = $_POST['pagado']; // 1 o 0
+
+            if ($pedidoDAO->cambiarEstadoPago($id, $pagado)) {
+                $response['success'] = true;
+                $txt = $pagado == 1 ? 'Pagado' : 'Pendiente de Pago';
+                $response['message'] = 'Pago actualizado a: ' . $txt;
+            } else {
+                $response['message'] = 'No se pudo actualizar el pago.';
             }
             break;
     }

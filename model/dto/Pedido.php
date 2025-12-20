@@ -13,6 +13,7 @@ class Pedido {
     public $fecha_entrega;
     public $hora_entrega;
     public $total;
+    public $pagado; // <--- NUEVO CAMPO
     public $estado; 
     public $observaciones;
     public $evidencia_foto;

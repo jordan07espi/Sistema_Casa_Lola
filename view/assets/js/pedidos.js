@@ -1,6 +1,6 @@
 /**
  * Archivo: view/assets/js/pedidos.js
- * Versión: Multi-Tillos + Filtro Rango Fechas + Modo Cards
+ * Versión: Multi-Tillos + Filtro Rango Fechas + Modo Cards + Control de Pagos
  */
 document.addEventListener('DOMContentLoaded', function() {
     
@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         lista.forEach(p => {
-            // Lógica de Colores
+            // A. Lógica de Colores para Estado del Pedido
             let badgeColor = '';
             let icon = '';
             if (p.estado === 'Pendiente') {
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 icon = '<i class="fas fa-times-circle mr-1"></i>';
             }
 
-            // Lógica de Tillos (Principal + Secundarios)
+            // B. Lógica de Tillos (Principal + Secundarios)
             let htmlTillos = `<div class="font-black text-gray-800 text-xl md:text-lg">#${sanitizeHTML(p.codigo_pedido)}</div>`;
             
             if (p.tillos_secundarios) {
@@ -83,13 +83,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 htmlTillos += `</div>`;
             }
 
-            // Lógica de Día en Español
+            // C. Lógica de Día en Español
             const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
             const fechaParts = p.fecha_entrega.split('-'); 
             const fechaObj = new Date(fechaParts[0], fechaParts[1] - 1, fechaParts[2]); 
             const nombreDia = diasSemana[fechaObj.getDay()];
 
-            // HTML Dinámico
+            // D. NUEVA LÓGICA VISUAL DE PAGO
+            // El backend debe devolver p.pagado (1 o 0)
+            const esPagado = (p.pagado == 1);
+            
+            // Estilos del botón según estado
+            const btnPagoClase = esPagado 
+                ? 'bg-green-100 text-green-700 border-green-200 hover:bg-green-200' 
+                : 'bg-red-100 text-red-700 border-red-200 hover:bg-red-200';
+            
+            const iconPago = esPagado ? 'fa-money-bill-wave' : 'fa-hand-holding-usd';
+            const textoPago = esPagado ? 'PAGADO' : 'PENDIENTE';
+            
+            // Estado al que cambiará si se hace clic (Invertir)
+            const nuevoEstadoPago = esPagado ? 0 : 1; 
+
+            // --- HTML Dinámico ---
             tbody.innerHTML += `
                 <tr class="bg-white md:hover:bg-orange-50 transition border md:border-b border-gray-200 rounded-xl shadow-md md:shadow-none block md:table-row relative overflow-hidden">
                     
@@ -123,8 +138,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     </td>
                     
                     <td class="px-5 pb-2 md:py-3 md:px-6 align-top block md:table-cell">
-                        <span class="md:hidden text-xs font-bold text-gray-400 uppercase mb-1 block">Total a Pagar</span>
-                        <div class="font-black text-gray-800 text-xl md:text-base">$${parseFloat(p.total).toFixed(2)}</div>
+                        <span class="md:hidden text-xs font-bold text-gray-400 uppercase mb-1 block">Total y Pago</span>
+                        <div class="font-black text-gray-800 text-xl md:text-base mb-1">$${parseFloat(p.total).toFixed(2)}</div>
+                        
+                        <button onclick="cambiarPago(${p.id_pedido}, ${nuevoEstadoPago})" 
+                            class="px-3 py-1 rounded-md text-[10px] md:text-xs font-bold border ${btnPagoClase} transition flex items-center gap-2 cursor-pointer shadow-sm w-fit"
+                            title="Clic para cambiar estado de pago">
+                            <i class="fas ${iconPago}"></i> ${textoPago}
+                        </button>
                     </td>
 
                     <td class="py-3 px-6 text-center align-top hidden md:table-cell">
@@ -176,7 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- 5. EVENT LISTENERS ---
 
-    // Buscador con Debounce (Retraso para no saturar al escribir)
+    // Buscador con Debounce
     buscador.addEventListener('input', (e) => {
         clearTimeout(timeoutBusqueda);
         timeoutBusqueda = setTimeout(() => {
@@ -191,7 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
         cargarPedidos(1);
     });
 
-    // Filtros de Fecha (Nuevos)
+    // Filtros de Fecha
     if(inpFechaDesde) {
         inpFechaDesde.addEventListener('change', (e) => {
             fechaDesde = e.target.value;
@@ -205,4 +226,30 @@ document.addEventListener('DOMContentLoaded', function() {
             cargarPedidos(1);
         });
     }
+
+    // --- 6. FUNCIÓN GLOBAL: CAMBIAR PAGO ---
+    // La definimos aquí para que tenga acceso a 'cargarPedidos' y 'paginaActual'
+    window.cambiarPago = function(id, nuevoEstado) {
+        const accion = nuevoEstado === 1 ? 'MARCAR COMO PAGADO' : 'MARCAR COMO NO PAGADO';
+        
+        // Confirmación simple
+        if(!confirm(`¿Desea ${accion} este pedido?`)) return;
+
+        const formData = new FormData();
+        formData.append('action', 'cambiar_pago');
+        formData.append('id_pedido', id);
+        formData.append('pagado', nuevoEstado);
+
+        fetch('../../controller/PedidoController.php', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Recargar tabla manteniendo página y filtros actuales
+                    cargarPedidos(paginaActual);
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(err => console.error("Error al cambiar pago:", err));
+    };
 });

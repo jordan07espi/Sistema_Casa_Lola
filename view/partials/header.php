@@ -40,6 +40,21 @@ $rolUsuario = $_SESSION['rol'] ?? 'Invitado';
     <title>Casa Lola - Gestión</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="manifest" href="../../manifest.json">
+    <meta name="theme-color" content="#ea580c">
+    <link rel="apple-touch-icon" href="../../view/assets/img/icon-192.png">
+
+    <script>
+        // Registrar Service Worker desde las vistas internas
+        if ('serviceWorker' in navigator) {
+            // El SW debe estar en la raíz para tener control sobre todo el dominio
+            navigator.serviceWorker.register('../../service-worker.js')
+            .then(reg => console.log('SW registrado correctamente:', reg.scope))
+            .catch(err => console.log('Error al registrar SW:', err));
+        }
+    </script>
+
     <style>
         /* Animación suave para nuevos pedidos en cocina */
         @keyframes bounceIn {

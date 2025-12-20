@@ -12,6 +12,25 @@ if (isset($_SESSION['id_usuario'])) {
     <meta name="viewport" content="width=device-width, initial-scale-1.0">
     <title>Login - Casa Lola</title>
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ea580c">
+    <link rel="apple-touch-icon" href="view/assets/img/icon-192.png">
+    
+    <script>
+        // Registrar el Service Worker para habilitar la instalación y el caché
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                .then(registration => {
+                    console.log('Service Worker registrado con éxito:', registration.scope);
+                })
+                .catch(err => {
+                    console.log('Fallo al registrar Service Worker:', err);
+                });
+            });
+        }
+    </script>
 </head>
 <body class="bg-gray-100 flex items-center justify-center h-screen">
     <div class="w-full max-w-sm p-8 bg-white rounded-lg shadow-lg border-t-4 border-orange-600">

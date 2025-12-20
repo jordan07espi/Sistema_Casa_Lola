@@ -18,11 +18,6 @@ $p = $dao->obtenerPorId($id_pedido);
 
 if (!$p) die("Pedido no encontrado.");
 
-// --- LÓGICA PARA FECHA EN ESPAÑOL ---
-$diasSemana = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
-$timestamp = strtotime($p->fecha_entrega);
-$nombreDia = $diasSemana[date('w', $timestamp)]; // Obtiene el día (0-6) y busca el nombre
-$fechaFormateada = date('d/m/Y', $timestamp); // Formato dia/mes/año
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -186,9 +181,27 @@ $fechaFormateada = date('d/m/Y', $timestamp); // Formato dia/mes/año
         </tbody>
     </table>
 
-    <div class="totales">
-        TOTAL: $<?php echo number_format($p->total, 2); ?>
+    <div class="totales text-right">
+        <div class="font-bold">TOTAL: $<?php echo number_format($p->total, 2); ?></div>
     </div>
+
+    <?php 
+    // Filtramos los tillos que NO están en la lista de mostrados
+    $tillosSinAsignar = array_filter($p->tillos, function($t) use ($tillosMostrados) {
+        return !in_array($t['codigo_tillo'], $tillosMostrados);
+    });
+    ?>
+
+    <?php if (!empty($tillosSinAsignar)): ?>
+    <div class="tillos-extra">
+        <div class="font-bold" style="font-size: 11px; margin-bottom: 2px;">OTRAS ETIQUETAS</div>
+        <div style="font-size: 12px; font-weight: bold;">
+            <?php foreach ($tillosSinAsignar as $tillo): ?>
+                <span>[#<?php echo $tillo['codigo_tillo']; ?>] </span>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <?php if(!empty($p->observaciones)): ?>
     <div style="margin-top: 10px; font-style: italic; border-top: 1px dashed black; padding-top:5px; font-size:12px;">
