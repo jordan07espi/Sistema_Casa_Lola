@@ -1,6 +1,6 @@
 /**
  * Archivo: view/assets/js/pedidos.js
- * Versión: Con Auto-Recarga (AJAX Polling)
+ * Versión: Final - SSE Silencioso (Actualización en tiempo real sin recargar)
  */
 document.addEventListener('DOMContentLoaded', function() {
     
@@ -10,8 +10,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const filtroEstado = document.getElementById('filtroEstado');
     const paginacionContainer = document.getElementById('paginacionContainer');
     const txtTotal = document.getElementById('txtTotal');
-
-    // Referencias Nuevas (Rango de Fechas)
     const inpFechaDesde = document.getElementById('fechaDesde');
     const inpFechaHasta = document.getElementById('fechaHasta');
 
@@ -22,23 +20,22 @@ document.addEventListener('DOMContentLoaded', function() {
     let fechaDesde = '';
     let fechaHasta = '';
     let timeoutBusqueda;
-    let intervaloRecarga; // Variable para controlar el reloj
+    let evtSource = null; // Variable para la conexión SSE
 
     // Carga inicial
     cargarPedidos();
     
-    // INICIO DEL RELOJ DE AUTO-RECARGA (Cada 5 segundos)
-    iniciarAutoRecarga();
+    // INICIAR CONEXIÓN SSE (VIGILANTE SILENCIOSO)
+    iniciarSSE();
 
     // --- 3. FUNCIÓN DE CARGA ---
-    // Agregamos el parámetro 'silencioso' para evitar parpadeos
     function cargarPedidos(pagina = 1, silencioso = false) {
         paginaActual = pagina;
-        
-        // Construcción de URL con todos los parámetros
         const url = `../../controller/PedidoController.php?action=listar&pagina=${pagina}&busqueda=${encodeURIComponent(busquedaActual)}&estado=${estadoActual}&desde=${fechaDesde}&hasta=${fechaHasta}`;
 
-        // SOLO mostramos "Cargando..." si NO es una recarga automática (silenciosa)
+        // MODO SILENCIOSO:
+        // Si es carga manual (false), mostramos "Cargando...".
+        // Si es SSE (true), NO mostramos nada para evitar parpadeos, el usuario solo verá los datos cambiar.
         if (!silencioso) {
             tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-gray-500">Cargando...</td></tr>`;
         }
@@ -49,31 +46,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     renderizarTabla(data.data);
                     renderizarPaginacion(data.pagination);
-                } else {
-                    if(!silencioso) { // Solo mostrar error si no es silencioso
-                        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-red-500">${data.message}</td></tr>`;
-                    }
+                } else if(!silencioso) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-red-500">${data.message}</td></tr>`;
                 }
             })
             .catch(err => console.error(err));
     }
 
-    function iniciarAutoRecarga() {
-        // Limpiamos cualquier intervalo previo por seguridad
-        if(intervaloRecarga) clearInterval(intervaloRecarga);
+    // --- 4. LÓGICA SSE (Actualización en Tiempo Real) ---
+    function iniciarSSE() {
+        if (evtSource) {
+            evtSource.close();
+        }
 
-        intervaloRecarga = setInterval(() => {
-            // Llamamos a cargarPedidos en modo silencioso (true)
-            // Mantenemos la página actual para no devolver al usuario a la página 1 si está navegando
-            cargarPedidos(paginaActual, true);
-        }, 5000); // 5000 ms = 5 segundos
+        // Conexión al archivo PHP que vigila la base de datos
+        evtSource = new EventSource('../../controller/PedidosSSE.php');
+
+        evtSource.onmessage = function(event) {
+            try {
+                const data = JSON.parse(event.data);
+                
+                // Si el servidor envía la señal {"cambio": true}
+                if (data.cambio) {
+                    // Recargamos la tabla manteniendo filtros y página actual
+                    cargarPedidos(paginaActual, true);
+                }
+            } catch (e) {
+                console.error("Error al procesar evento SSE:", e);
+            }
+        };
+
+        evtSource.onerror = function() {
+            // Si la conexión se cae, intentamos reconectar en 5 segundos sin molestar al usuario
+            evtSource.close();
+            setTimeout(iniciarSSE, 5000);
+        };
     }
 
-    // --- 4. RENDERIZADO (TARJETA vs TABLA) ---
+    // --- 5. RENDERIZADO DE TABLA ---
     function renderizarTabla(lista) {
-        // Nota: No limpiamos tbody aquí con innerHTML = '' al inicio para evitar parpadeo blanco,
-        // construimos todo el HTML primero.
-        
         if (!lista || lista.length === 0) {
             tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-gray-500">No se encontraron pedidos.</td></tr>`;
             return;
@@ -82,9 +93,10 @@ document.addEventListener('DOMContentLoaded', function() {
         let htmlFinal = '';
 
         lista.forEach(p => {
-            // A. Lógica de Colores para Estado del Pedido
             let badgeColor = '';
             let icon = '';
+            
+            // Colores según estado
             if (p.estado === 'Pendiente') {
                 badgeColor = 'bg-yellow-100 text-yellow-800 border-yellow-200';
                 icon = '<i class="fas fa-clock mr-1"></i>';
@@ -96,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 icon = '<i class="fas fa-times-circle mr-1"></i>';
             }
 
-            // B. Lógica de Tillos
+            // Formato de Tillos
             let htmlTillos = `<div class="font-black text-gray-800 text-xl md:text-lg">#${sanitizeHTML(p.codigo_pedido)}</div>`;
             if (p.tillos_secundarios) {
                 const extras = p.tillos_secundarios.split(',');
@@ -107,14 +119,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 htmlTillos += `</div>`;
             }
 
-            // C. Lógica de Día
+            // Formato de Fecha
             const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-            // Fix para compatibilidad Safari/Firefox con fechas: YYYY-MM-DD
             const fechaParts = p.fecha_entrega.split('-'); 
             const fechaObj = new Date(fechaParts[0], fechaParts[1] - 1, fechaParts[2]); 
             const nombreDia = diasSemana[fechaObj.getDay()];
 
-            // D. Lógica de Pago
+            // Estado de Pago
             const esPagado = (p.pagado == 1);
             const btnPagoClase = esPagado 
                 ? 'bg-green-100 text-green-700 border-green-200 hover:bg-green-200' 
@@ -173,12 +184,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 </tr>
             `;
         });
-        
-        // Actualizamos el DOM de una sola vez
         tbody.innerHTML = htmlFinal;
     }
-    
-    // --- 5. RENDERIZADO PAGINACIÓN (Igual que antes) ---
+
+    // --- 6. RENDERIZADO PAGINACIÓN ---
     function renderizarPaginacion(pagination) {
         txtTotal.textContent = pagination.total_registros;
         paginacionContainer.innerHTML = '';
@@ -191,7 +200,7 @@ document.addEventListener('DOMContentLoaded', function() {
         btnPrev.className = `px-3 py-1 border rounded transition ${current === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-100'}`;
         btnPrev.innerHTML = '<i class="fas fa-chevron-left"></i>';
         btnPrev.disabled = current === 1;
-        btnPrev.onclick = () => cargarPedidos(current - 1); // Click manual = carga normal (con spinner)
+        btnPrev.onclick = () => cargarPedidos(current - 1);
         paginacionContainer.appendChild(btnPrev);
 
         for (let i = 1; i <= totalPaginas; i++) {
@@ -210,29 +219,24 @@ document.addEventListener('DOMContentLoaded', function() {
         paginacionContainer.appendChild(btnNext);
     }
 
-    // --- 6. EVENT LISTENERS ---
-    // En cada evento, reiniciamos el intervalo para que no se cruce con una búsqueda manual
-
+    // --- 7. EVENT LISTENERS ---
     buscador.addEventListener('input', (e) => {
         clearTimeout(timeoutBusqueda);
         timeoutBusqueda = setTimeout(() => {
             busquedaActual = e.target.value;
             cargarPedidos(1);
-            iniciarAutoRecarga(); // Reiniciar reloj
         }, 300);
     });
 
     filtroEstado.addEventListener('change', (e) => {
         estadoActual = e.target.value;
         cargarPedidos(1);
-        iniciarAutoRecarga();
     });
 
     if(inpFechaDesde) {
         inpFechaDesde.addEventListener('change', (e) => {
             fechaDesde = e.target.value;
             cargarPedidos(1);
-            iniciarAutoRecarga();
         });
     }
 
@@ -240,11 +244,10 @@ document.addEventListener('DOMContentLoaded', function() {
         inpFechaHasta.addEventListener('change', (e) => {
             fechaHasta = e.target.value;
             cargarPedidos(1);
-            iniciarAutoRecarga();
         });
     }
 
-    // --- 7. FUNCIÓN GLOBAL: CAMBIAR PAGO ---
+    // --- 8. FUNCIÓN GLOBAL: CAMBIAR PAGO ---
     window.cambiarPago = function(id, nuevoEstado) {
         const accion = nuevoEstado === 1 ? 'MARCAR COMO PAGADO' : 'MARCAR COMO NO PAGADO';
         if(!confirm(`¿Desea ${accion} este pedido?`)) return;
@@ -258,7 +261,8 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    cargarPedidos(paginaActual, true); // Recarga silenciosa tras el cambio
+                    // Feedback visual inmediato
+                    cargarPedidos(paginaActual, true);
                 } else {
                     alert(data.message);
                 }
@@ -266,3 +270,10 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(err => console.error("Error al cambiar pago:", err));
     };
 });
+
+function sanitizeHTML(str) {
+    if (!str) return '';
+    const temp = document.createElement('div');
+    temp.textContent = str;
+    return temp.innerHTML;
+}
