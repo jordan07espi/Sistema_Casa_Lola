@@ -13,6 +13,7 @@ if (isset($_SESSION['id_usuario'])) {
     <title>Login - Casa Lola</title>
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <link rel="icon" type="image/png" href="view/assets/img/icon-192.png">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#ea580c">
     <link rel="apple-touch-icon" href="view/assets/img/icon-192.png">
