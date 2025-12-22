@@ -62,7 +62,6 @@ $claseEstado = $estadoClasses[$p->estado] ?? 'bg-gray-100';
                 <div>
                     <h2 class="text-2xl font-bold tracking-wide uppercase"><?php echo htmlspecialchars($p->nombre_cliente); ?></h2>
                     <p class="text-gray-300 flex items-center gap-3 text-sm mt-1">
-                        <span><i class="fas fa-id-card mr-1"></i> <?php echo htmlspecialchars($p->cedula); ?></span>
                         <span><i class="fas fa-phone mr-1"></i> <?php echo htmlspecialchars($p->telefono); ?></span>
                     </p>
                 </div>

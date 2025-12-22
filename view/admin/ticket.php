@@ -17,7 +17,14 @@ $dao = new PedidoDAO();
 $p = $dao->obtenerPorId($id_pedido);
 
 if (!$p) die("Pedido no encontrado.");
+// --- CORRECCIÓN 1: Definir variables de Fecha ---
+$diasSemana = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
+$timestamp = strtotime($p->fecha_entrega);
+$nombreDia = $diasSemana[date('w', $timestamp)];
+$fechaFormateada = date('d/m/Y', $timestamp);
 
+// --- CORRECCIÓN 2: Inicializar array para evitar error en línea 190 ---
+$tillosMostrados = [];
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -171,7 +178,10 @@ if (!$p) die("Pedido no encontrado.");
             <tr>
                 <td></td>
                 <td style="padding-bottom: 8px;">
-                    <?php foreach ($tillosProds as $t): ?>
+                    <?php foreach ($tillosProds as $t): 
+                        // --- CORRECCIÓN: Agregamos el tillo a la lista de "ya mostrados" ---
+                        $tillosMostrados[] = $t['codigo_tillo']; 
+                    ?>
                         <span class="tillo-text">[#<?php echo $t['codigo_tillo']; ?>]</span>
                     <?php endforeach; ?>
                 </td>
@@ -183,6 +193,14 @@ if (!$p) die("Pedido no encontrado.");
 
     <div class="totales text-right">
         <div class="font-bold">TOTAL: $<?php echo number_format($p->total, 2); ?></div>
+        
+        <div style="font-size: 14px; margin-top: 5px; font-weight: bold;">
+            <?php if ($p->pagado == 1): ?>
+                <span style="border: 2px solid black; padding: 2px 6px;">PAGADO</span>
+            <?php else: ?>
+                <span style="border: 2px solid black; padding: 2px 6px;">PENDIENTE DE PAGO</span>
+            <?php endif; ?>
+        </div>
     </div>
 
     <?php 
